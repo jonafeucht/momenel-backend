@@ -12,4 +12,16 @@ const doesEmailExist = async (req, res) => {
   return res.status(200).json({ exists: false });
 };
 
-export { doesEmailExist };
+// this is a test route to get a token
+
+const signIn = async (req, res) => {
+  const { email, password } = req.body;
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+};
+
+export { doesEmailExist, signIn };
