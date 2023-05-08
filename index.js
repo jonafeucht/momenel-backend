@@ -14,10 +14,10 @@ const app = express();
 // ...
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use("/auth", authRouter);
 app.use(verify);
 
 // Routes
-app.use("/auth", authRouter);
 app.use("/feed", feedRouter);
 app.use("/search", searchRouter);
 app.use("/posts", postsRouter);
