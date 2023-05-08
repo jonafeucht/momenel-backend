@@ -1,5 +1,9 @@
 import express from "express";
-import { getProfileInitialData } from "../controllers/users.js";
+import {
+  getProfileInfo,
+  getProfileInitialData,
+  updatePersonalInfo,
+} from "../controllers/users.js";
 
 const router = express.Router();
 
@@ -14,7 +18,9 @@ router.get("/intial", getProfileInitialData);
 //todo: get user blocked list
 //todo: edit user profile => name, username, bio and link, profile picture, cover pic, location
 //todo: get user email and date of birth
+router.get("/personalInfo", getProfileInfo);
 //todo: update user email and/or date of birth
+router.post("/updatePersonalInfo", updatePersonalInfo);
 //todo: update/forgot user password
 //todo: delete user account
 //todo: get user liked posts
