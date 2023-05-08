@@ -32,18 +32,37 @@ const getProfileInfo = async (req, res) => {
 //todo: add validation to check if the email is valid and date of birth is in the correct format
 //todo: add validation to check if the email is already in use
 //todo: add validation to check if the date of birth is in the past
-//todo: update email based on --> const { user, error } = await supabase.auth.update({email: 'new@email.com'})
+
+// updatePersonalInfo used to update date of birth only. email is updated on the frontend.
 const updatePersonalInfo = async (req, res) => {
-  const { email, dob } = req.body;
+  console.log("updatePersonalInfo called");
+  const { email, birthday } = req.body;
+  if (!birthday)
+    return res.status(400).json({ error: "Birthday cannot be empty" });
+
+  console.log(birthday);
+  const date = new Date(birthday);
+  //if date is invalid
+  if (isNaN(date)) {
+    return res.status(400).json({ error: "The date of birth is incorrect" });
+  }
+  //if date is in the future
+  if (date > new Date()) {
+    return res
+      .status(400)
+      .json({ error: "The date of birth cannot be in the future" });
+  }
+
   const { data, error } = await supabase
     .from("profiles")
-    .update({ email, dob })
+    .update({ date_of_birth: date })
     .eq("id", req.user.id)
-    .limit(1)
-    .single();
+    .select("date_of_birth");
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  return res
+    .status(200)
+    .json({ message: "Date of birth updated successfully" });
 };
 
 export { getProfileInitialData, updatePersonalInfo, getProfileInfo };
