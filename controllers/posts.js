@@ -21,7 +21,12 @@ const getUserPosts = async (req, res) => {
 };
 // GET /posts
 const getPosts = async (req, res) => {
-  const { data, error } = await supabase.from("post").select("*");
+  // return all the posts for the user user with comments
+  const { data, error } = await supabase
+    .from("post")
+    .select(
+      `*, comments:comment(id, text, user:profiles(id, name, username, profile_url), created_at), user:profiles(id, name, username, profile_url), likes:like(created_at, user:profiles(id, username, profile_url))`
+    );
   if (error) return res.status(500).json({ error: error.message });
   console.log(data);
   res.json(data);
