@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  getProfileInfo,
+  getDob,
   getProfileInitialData,
   updatePersonalInfo,
 } from "../controllers/users.js";
@@ -17,8 +17,7 @@ router.get("/intial", getProfileInitialData);
 //todo: block/unblock a user
 //todo: get user blocked list
 //todo: edit user profile => name, username, bio and link, profile picture, cover pic, location
-//todo: get user email and date of birth
-router.get("/personalInfo", getProfileInfo);
+router.get("/dob", getDob);
 //todo: update user email and/or date of birth
 router.post("/updatePersonalInfo", updatePersonalInfo);
 //todo: update/forgot user password

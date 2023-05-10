@@ -14,11 +14,11 @@ const getProfileInitialData = async (req, res) => {
   res.json(data);
 };
 
-//get user email and date of birth
-const getProfileInfo = async (req, res) => {
+//get date of birth
+const getDob = async (req, res) => {
   const { data, error } = await supabase
     .from("profiles")
-    .select("email, date_of_birth")
+    .select("date_of_birth")
     .eq("id", req.user.id)
     .limit(1)
     .single();
@@ -27,20 +27,13 @@ const getProfileInfo = async (req, res) => {
   res.json(data);
 };
 
-// update user email and/or date of birth
-//todo: chnage update logic to update only the fields that are passed in the request body
-//todo: add validation to check if the email is valid and date of birth is in the correct format
-//todo: add validation to check if the email is already in use
-//todo: add validation to check if the date of birth is in the past
-
 // updatePersonalInfo used to update date of birth only. email is updated on the frontend.
 const updatePersonalInfo = async (req, res) => {
   console.log("updatePersonalInfo called");
-  const { email, birthday } = req.body;
+  const { birthday } = req.body;
   if (!birthday)
     return res.status(400).json({ error: "Birthday cannot be empty" });
 
-  console.log(birthday);
   const date = new Date(birthday);
   //if date is invalid
   if (isNaN(date)) {
@@ -51,6 +44,25 @@ const updatePersonalInfo = async (req, res) => {
     return res
       .status(400)
       .json({ error: "The date of birth cannot be in the future" });
+  }
+
+  // if user is under 18 years old based on the date of birth
+  const today = new Date();
+  const age = today.getFullYear() - date.getFullYear();
+  const month = today.getMonth() - date.getMonth();
+  if (month < 0 || (month === 0 && today.getDate() < date.getDate())) {
+    age--;
+  }
+  if (age < 18) {
+    return res
+      .status(400)
+      .json({ error: "You must be 18 years or older to use this app" });
+  }
+  // if age is older than 200 years
+  if (age > 200) {
+    return res
+      .status(400)
+      .json({ error: "You must be 200 years or younger to use this app" });
   }
 
   const { data, error } = await supabase
@@ -65,4 +77,4 @@ const updatePersonalInfo = async (req, res) => {
     .json({ message: "Date of birth updated successfully" });
 };
 
-export { getProfileInitialData, updatePersonalInfo, getProfileInfo };
+export { getProfileInitialData, updatePersonalInfo, getDob };
