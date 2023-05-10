@@ -12,7 +12,7 @@ const verify = async (req, res, next) => {
       data: { user },
       error,
     } = await supabase.auth.getUser(token);
-    if (error) return res.status(401).json({ error: error.message });
+    if (error) return res.status(401).json({ error: "Please log in" });
     req.user = user;
   }
 
