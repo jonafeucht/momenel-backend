@@ -41,7 +41,7 @@ const handleLike = async (req, res) => {
   const { id: userId } = req.user;
   const { id: postId } = req.params;
 
-  // check if user has already liked this post and if so, remove like from like table. if not, add like to like table using postId and userId
+  // check if user has already liked this post and if so, remove like from like table. if not, add like to like table using postId and userId.
   const { data, error } = await supabase
     .from("like")
     .select("*")
