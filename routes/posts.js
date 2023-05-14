@@ -7,6 +7,7 @@ import {
   getUserPosts,
   test2,
   handleLike,
+  handleRepost,
 } from "../controllers/posts.js";
 
 const router = express.Router();
@@ -17,11 +18,9 @@ router.get("/test2", test2);
 router.get("/", getPosts);
 router.get("/:id", getOnePost);
 router.delete("/:id", deletePost);
-
 //todo: handle new post
-//todo: handle post like and unlike
 router.post("/like/:id", handleLike);
-//todo: handle post handleRepost
+router.post("/repost/:id", handleRepost);
 //todo: list of all likes for a post
 //todo: list of all reposts for a post
 
