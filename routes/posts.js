@@ -8,6 +8,7 @@ import {
   test2,
   handleLike,
   handleRepost,
+  getLikes,
 } from "../controllers/posts.js";
 
 const router = express.Router();
@@ -22,6 +23,7 @@ router.delete("/:id", deletePost);
 router.post("/like/:id", handleLike);
 router.post("/repost/:id", handleRepost);
 //todo: list of all likes for a post
+router.get("/like/:id", getLikes);
 //todo: list of all reposts for a post
 
 //todo: get single post data with id

@@ -1,3 +1,4 @@
+import { log } from "console";
 import supabase from "../supabase/supabase.js";
 
 // test function
@@ -78,6 +79,28 @@ const handleLike = async (req, res) => {
   }
 };
 
+// GET /posts/likes/:id (id of post)
+const getLikes = async (req, res) => {
+  const { id: postId } = req.params;
+  const { id: userId } = req.user;
+
+  // get all likes for this post with count sorted by created_at, also get user id, username, and profile pic for each like (join with profile table), also get if userId is following the user who liked the post
+  const { data, error } = await supabase
+    .from("like")
+    .select(
+      `*,
+    user: profiles(id, username, profile_url)
+    `
+    )
+    .eq("post_id", postId)
+    .order("created_at", { ascending: false });
+
+  console.log(error);
+  if (error) return res.status(500).json({ error: "Something went wrong" });
+
+  return res.json({ data });
+};
+
 // POST /posts/repost/:id (id of post)
 const handleRepost = async (req, res) => {
   const { id: userId } = req.user;
@@ -154,5 +177,6 @@ export {
   getUserPosts,
   deletePost,
   handleLike,
+  getLikes,
   handleRepost,
 };
