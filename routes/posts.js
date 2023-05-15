@@ -1,21 +1,14 @@
 import express from "express";
 import {
-  test,
   getPosts,
   deletePost,
   getOnePost,
   getUserPosts,
-  test2,
-  handleLike,
-  handleRepost,
-  getLikes,
 } from "../controllers/posts.js";
 
 const router = express.Router();
 
-router.get("/test", test);
 router.get("/user", getUserPosts);
-router.get("/test2", test2);
 router.get("/", getPosts);
 router.get("/:id", getOnePost);
 router.delete("/:id", deletePost);
@@ -26,7 +19,7 @@ router.post("/repost/:id", handleRepost);
 router.get("/like/:id", getLikes);
 //todo: list of all reposts for a post
 
-//todo: get single post data with id
+//done: get single post data with id
 //todo: get all comments for a post
 //todo: post a new comment to a post
 //todo: delete a comment
