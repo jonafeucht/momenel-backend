@@ -2,6 +2,7 @@ import express from "express";
 import {
   getDob,
   getProfileInitialData,
+  handleFollow,
   updatePersonalInfo,
 } from "../controllers/users.js";
 
@@ -14,6 +15,7 @@ router.get("/intial", getProfileInitialData);
 //todo: get user followers
 //todo: get user following only if the user id is same as the logged in user
 //todo: follow/unfollow a user
+router.post("/follow/:id", handleFollow);
 //todo: block/unblock a user
 //todo: get user blocked list
 //todo: edit user profile => name, username, bio and link, profile picture, cover pic, location
