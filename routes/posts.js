@@ -4,6 +4,8 @@ import {
   deletePost,
   getOnePost,
   getUserPosts,
+  createPost,
+  updatePost,
 } from "../controllers/posts.js";
 
 const router = express.Router();
@@ -11,12 +13,11 @@ const router = express.Router();
 router.get("/user", getUserPosts);
 router.get("/", getPosts);
 router.get("/:id", getOnePost);
+router.post("/", createPost);
+router.patch("/:id", updatePost);
 router.delete("/:id", deletePost);
-//todo: handle new post
-router.post("/like/:id", handleLike);
-router.post("/repost/:id", handleRepost);
+//todo: handle new posts
 //todo: list of all likes for a post
-router.get("/like/:id", getLikes);
 //todo: list of all reposts for a post
 
 //done: get single post data with id
