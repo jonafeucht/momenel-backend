@@ -5,6 +5,9 @@ import userRouter from "./routes/user.js";
 import feedRouter from "./routes/feed.js";
 import searchRouter from "./routes/search.js";
 import reportRouter from "./routes/report.js";
+import likeRouter from "./routes/like.js";
+import followRouter from "./routes/follow.js";
+import repostsRouter from "./routes/reposts.js";
 import notificationsRouter from "./routes/notifications.js";
 import bodyParser from "body-parser";
 import verify from "./middleware/auth.js";
@@ -24,6 +27,9 @@ app.use("/posts", postsRouter);
 app.use("/user", userRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/report", reportRouter);
+app.use("/like", likeRouter);
+app.use("/follow", followRouter);
+app.use("/repost", repostsRouter);
 
 // Error handling middleware
 // ...
