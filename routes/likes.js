@@ -3,7 +3,7 @@ import { handleLike, getLikes } from "../controllers/likes.js";
 
 const router = express.Router();
 
-router.post("/like/:id", handleLike);
-router.get("/like/:id", getLikes);
+router.post("/:id", handleLike);
+router.get("/:id", getLikes);
 
 export default router;

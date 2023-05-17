@@ -39,11 +39,11 @@ const handleLike = async (req, res) => {
       .eq("post_id", postId);
 
     if (error2) return res.status(500).json({ error: "Something went wrong" });
-    return res.json({ likes: likesCount });
+    res.json({ likes: likesCount });
   }
 };
 
-// GET /posts/likes/:id (id of post)
+// GET /likes/:id (id of post)
 const getLikes = async (req, res) => {
   const { id: postId } = req.params;
   const { id: userId } = req.user;
@@ -59,10 +59,10 @@ const getLikes = async (req, res) => {
     .eq("post_id", postId)
     .order("created_at", { ascending: false });
 
-  console.log(error);
+  // console.log(error);
   if (error) return res.status(500).json({ error: "Something went wrong" });
 
-  return res.json({ data });
+  res.json({ data });
 };
 
 export { handleLike, getLikes };
