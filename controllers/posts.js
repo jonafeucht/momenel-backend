@@ -214,7 +214,7 @@ const deletePost = async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase.from("post").delete().eq("id", id);
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  res.staus(204).json(data);
 };
 
 // module.exports = { getPosts, createPost, updatePost, deletePost };
