@@ -1,5 +1,6 @@
 import express from "express";
 import postsRouter from "./routes/posts.js";
+import commentRouter from "./routes/comment.js";
 import authRouter from "./routes/auth.js";
 import userRouter from "./routes/user.js";
 import feedRouter from "./routes/feed.js";
@@ -24,6 +25,7 @@ app.use(verify);
 app.use("/feed", feedRouter);
 app.use("/search", searchRouter);
 app.use("/posts", postsRouter);
+app.use("/comment", commentRouter);
 app.use("/user", userRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/report", reportRouter);
