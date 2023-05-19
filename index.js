@@ -8,6 +8,7 @@ import searchRouter from "./routes/search.js";
 import reportRouter from "./routes/report.js";
 import notificationsRouter from "./routes/notifications.js";
 import likeRouter from "./routes/likes.js";
+import commentLikeRouter from "./routes/commentsLike.js";
 import repostRouter from "./routes/repost.js";
 import bodyParser from "body-parser";
 import verify from "./middleware/auth.js";
@@ -30,6 +31,7 @@ app.use("/user", userRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/report", reportRouter);
 app.use("/like", likeRouter);
+app.use("/likeComment", commentLikeRouter);
 app.use("/repost", repostRouter);
 
 // Error handling middleware
