@@ -3,6 +3,6 @@ import { handleRepost } from "../controllers/repost.js";
 
 const router = express.Router();
 
-router.post("/repost/:id", handleRepost);
+router.post("/:id", handleRepost);
 
 export default router;
