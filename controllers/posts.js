@@ -121,11 +121,14 @@ const createPost = async (req, res) => {
   // get the caption from the body
   const { caption } = req.body;
   const { id: userId } = req.user;
+  console.log(caption);
   // create the post
   // console.log({ userId, caption });
 
   // extract the hashtags from the caption
   // const hashtags = await extractHashtags(caption);
+
+  // pass in the caption to the extractHashtags function to extract the hashtags from the caption
 
   const { data, error } = await supabase
     .from("post")
@@ -163,6 +166,9 @@ const createPost = async (req, res) => {
   data[0].likes = data[0].likes.length;
   data[0].comments = data[0].comments.length;
   data[0].reposts = data[0].reposts.length;
+
+  // pass caption, userId, and postId to the extractHashtags function
+  extractHashtags(caption, userId, data[0].id);
 
   res.json(data);
 };
