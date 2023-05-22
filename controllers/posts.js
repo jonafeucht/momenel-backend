@@ -1,4 +1,5 @@
 import supabase from "../supabase/supabase.js";
+import extractHashtags from "../helpers/hashtags.js";
 
 // this will get all the posts by the user
 const getUserPosts = async (req, res) => {
@@ -121,6 +122,10 @@ const createPost = async (req, res) => {
   // array of dimensions of the media
   const dimensions = JSON.parse(req.body.dimensions);
   const { id: userId } = req.user;
+
+  console.log(caption);
+  // create the post
+
   // the media files with buffer
   const { files: media } = req;
   console.log(dimensions);
@@ -128,6 +133,7 @@ const createPost = async (req, res) => {
   console.log(media);
 
   // create the post
+
 
   const { data, error } = await supabase
     .from("post")
@@ -165,8 +171,12 @@ const createPost = async (req, res) => {
   data[0].likes = data[0].likes.length;
   data[0].comments = data[0].comments.length;
   data[0].reposts = data[0].reposts.length;
+// pass caption, userId, and postId to the extractHashtags function
+  extractHashtags(caption, userId, data[0].id);
+
 
   return res.status(201).json(data);
+
 };
 
 // PATCH /posts/:id
@@ -221,7 +231,7 @@ const deletePost = async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase.from("post").delete().eq("id", id);
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  res.staus(204).json(data);
 };
 
 // module.exports = { getPosts, createPost, updatePost, deletePost };
