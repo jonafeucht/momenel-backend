@@ -1,4 +1,3 @@
-// import { log } from "console";
 import supabase from "../supabase/supabase.js";
 
 // this will get all the posts by the user
@@ -119,9 +118,17 @@ const getOnePost = async (req, res) => {
 const createPost = async (req, res) => {
   // get the caption from the body
   const { caption } = req.body;
+  // array of dimensions of the media
+  const dimensions = JSON.parse(req.body.dimensions);
   const { id: userId } = req.user;
-  // create the post
+  // the media files with buffer
+  const { files: media } = req;
+  console.log(dimensions);
   console.log({ userId, caption });
+  console.log(media);
+
+  // create the post
+
   const { data, error } = await supabase
     .from("post")
     .insert([
@@ -159,7 +166,7 @@ const createPost = async (req, res) => {
   data[0].comments = data[0].comments.length;
   data[0].reposts = data[0].reposts.length;
 
-  res.json(data);
+  return res.status(201).json(data);
 };
 
 // PATCH /posts/:id

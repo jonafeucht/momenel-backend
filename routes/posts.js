@@ -7,13 +7,15 @@ import {
   createPost,
   updatePost,
 } from "../controllers/posts.js";
+import multer from "multer";
 
 const router = express.Router();
+const upload = multer(); //multer options
 
 router.get("/user", getUserPosts);
 router.get("/", getPosts);
 router.get("/:id", getOnePost);
-router.post("/", createPost);
+router.post("/", upload.array("content"), createPost);
 router.patch("/:id", updatePost);
 router.delete("/:id", deletePost);
 //todo: handle new posts
