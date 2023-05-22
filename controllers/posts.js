@@ -1,5 +1,6 @@
 // import { log } from "console";
 import supabase from "../supabase/supabase.js";
+import extractHashtags from "../helpers/hashtags.js";
 
 // this will get all the posts by the user
 const getUserPosts = async (req, res) => {
@@ -121,7 +122,11 @@ const createPost = async (req, res) => {
   const { caption } = req.body;
   const { id: userId } = req.user;
   // create the post
-  console.log({ userId, caption });
+  // console.log({ userId, caption });
+
+  // extract the hashtags from the caption
+  // const hashtags = await extractHashtags(caption);
+
   const { data, error } = await supabase
     .from("post")
     .insert([

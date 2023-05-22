@@ -10,6 +10,7 @@ import likeRouter from "./routes/likes.js";
 import repostRouter from "./routes/repost.js";
 import bodyParser from "body-parser";
 import verify from "./middleware/auth.js";
+import hashtagRouter from "./routes/hashtags.js";
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use("/notifications", notificationsRouter);
 app.use("/report", reportRouter);
 app.use("/like", likeRouter);
 app.use("/repost", repostRouter);
+app.use("/hashtag", hashtagRouter);
 
 // Error handling middleware
 // ...
