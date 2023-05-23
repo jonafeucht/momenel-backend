@@ -8,10 +8,10 @@ const getNotification = async (req, res) => {
   let { data: notifications, error } = await supabase
     .from("notifications ")
     .select(
-      "*, user:profiles!notifications_sender_id_fkey(id,username,profile_url),post(id)"
+      "*, user:profiles!notifications_sender_id_fkey(id,username,profile_url),post(id),comment(id,post_id)"
     )
     .eq("receiver_id", userId)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: true })
     .range(from, to);
 
   if (error) {
