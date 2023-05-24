@@ -33,4 +33,18 @@ const postHashtag = async (req, res) => {
   return res.status(201).json(data2);
 };
 
-export { getHashtags, postHashtag };
+// user follow a hashtag
+const followHashtag = async (req, res) => {
+  console.log(req.body, req.user.id);
+  const { data, error } = await supabase.from("user_hashtag").insert([
+    {
+      user_id: req.user.id,
+      hashtag_id: req.body.hashtag_id,
+    },
+  ]);
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.status(201).json(data);
+};
+
+export { getHashtags, postHashtag, followHashtag };
