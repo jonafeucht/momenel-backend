@@ -10,45 +10,57 @@ function extractHashtags(str, userId, postId) {
 
   let tags = str.match(regexp);
   console.log(tags);
-  // if hashtags is not null
+
   if (tags) {
-    // loop through hashtags
-    tags?.forEach(async (hashtag) => {
-      // console.log(hashtag);
-      // check if hashtag already exists
+    // check if the hashtag already exists in the database
+    tags.forEach(async (tag) => {
       const { data, error } = await supabase
         .from("hashtag")
         .select("*")
-        .eq("hashtag", hashtag);
-      if (error) return { error: error.message };
-      if (data.length > 0) return { error: "Hashtag already exists" };
+        .eq("hashtag", tag);
 
-      // insert hashtag into database
-      const { data: data2, error: error2 } = await supabase
-        .from("hashtag")
-        .insert([{ hashtag: hashtag }])
-        .select();
+      if (error) return res.status(500).json({ error: error.message });
+      console.log(data);
+      if (data.length > 0) {
+        let tag_id = data[0].id;
+        console.log(
+          "hashtag already exists.. creating post_hashtag relationship. This is the tag id: ",
+          tag_id
+        );
+        // create post and hashtag relationship in the post_hashtags table
+        const { data: data2, error: error2 } = await supabase
+          .from("post_hashtags")
+          .insert([
+            {
+              post_id: postId,
+              hashtag_id: tag_id,
+            },
+          ]);
+        if (error2) return { error: error2.message };
+      }
+      // if the hashtag does not exist, create it
+      else {
+        const { data: data3, error: error3 } = await supabase
+          .from("hashtag")
+          .insert([
+            {
+              hashtag: tag,
+            },
+          ])
+          .select("*");
+        if (error3) return { error: error3.message };
 
-      if (error2) return { error: error2.message };
-      // create association between hashtag and post and hashtag and user
-      // get the id of the hashtag
-      const hashtagId = data2[0].id;
-
-      // create association between hashtag and post
-      const { data: data3, error: error3 } = await supabase
-        .from("post_hashtags")
-        .insert([{ hashtag_id: hashtagId, post_id: postId }]);
-
-      // send error
-      if (error3) return { error: error3.message };
-
-      // create association between hashtag and user
-      const { data: data4, error: error4 } = await supabase
-        .from("user_hashtag")
-        .insert([{ hashtag_id: hashtagId, user_id: userId }]);
-
-      // send error
-      if (error4) return { error: error4.message };
+        // create post and hashtag relationship in the post_hashtags table
+        const { data: data4, error: error4 } = await supabase
+          .from("post_hashtags")
+          .insert([
+            {
+              post_id: postId,
+              hashtag_id: data3[0].id,
+            },
+          ]);
+        if (error4) return { error: error4.message };
+      }
     });
   }
 }
