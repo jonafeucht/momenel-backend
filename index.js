@@ -5,7 +5,7 @@ import authRouter from "./routes/auth.js";
 import userRouter from "./routes/user.js";
 import feedRouter from "./routes/feed.js";
 import searchRouter from "./routes/search.js";
-import reportRouter from "./routes/report.js";
+import reportRouter from "./routes/reports.js";
 import notificationsRouter from "./routes/notifications.js";
 import likeRouter from "./routes/likes.js";
 import commentLikeRouter from "./routes/commentsLike.js";
