@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import express from "express";
 import { getOptions, handleReport } from "../controllers/reports.js";
 
 const router = express.Router();
