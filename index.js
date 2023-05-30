@@ -26,11 +26,11 @@ app.use("/auth", authRouter);
 app.use(verify);
 
 // Routes
+app.use("/user", userRouter);
 app.use("/feed", feedRouter);
 app.use("/search", searchRouter);
 app.use("/posts", postsRouter);
 app.use("/comment", commentRouter);
-app.use("/user", userRouter);
 app.use("/followuser", followerRouter);
 app.use("/blockuser", BlockRouter);
 app.use("/notifications", notificationsRouter);

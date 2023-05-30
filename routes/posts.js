@@ -21,6 +21,7 @@ router.delete("/:id", deletePost);
 //todo: handle new posts
 //todo: list of all likes for a post
 //todo: list of all reposts for a post
+//todo: get user liked posts
 
 //done: get single post data with id
 //todo: get all comments for a post
