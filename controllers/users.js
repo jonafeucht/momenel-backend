@@ -32,8 +32,27 @@ const getEditProfileData = async (req, res) => {
 
 // GET /user/checkUsername/:username
 const checkUsername = async (req, res) => {
-  const { username } = req.params;
-  console.log(username);
+  let { username } = req.params;
+  console.log("user", username);
+
+  username = username.toLowerCase();
+  username = username.trim();
+
+  // check error
+  if (!username || username === "")
+    return res.status(400).json({ error: "Username cannot be empty" });
+  if (username && username.length > 38)
+    return res
+      .status(400)
+      .json({ error: "Username cannot be more than 38 characters" });
+  if (username && username.includes(" "))
+    return res.status(400).json({ error: "Username cannot have spaces" });
+
+  // username can't have special characters except underscore
+  if (username && !username.match(/^[a-zA-Z0-9_]+$/))
+    return res
+      .status(400)
+      .json({ error: "Username cannot have special characters" });
 
   // check if username is taken
   const { data, error } = await supabase
@@ -42,6 +61,14 @@ const checkUsername = async (req, res) => {
     .eq("username", username);
 
   if (error) return res.status(500).json({ error: error.message });
+  console.log(data);
+
+  // check if data has an id that equal req.user.id. If yes, then username is available
+  if (data.length > 0) {
+    if (data[0].id === req.user.id) {
+      return res.status(200).json({ message: "Username is available" });
+    }
+  }
 
   if (data.length > 0) {
     console.log(data);
@@ -49,6 +76,66 @@ const checkUsername = async (req, res) => {
   } else {
     return res.status(200).json({ message: "Username is available" });
   }
+};
+
+const updateUsername = async (req, res) => {
+  let { username } = req.params;
+  const { id: userId } = req.user;
+
+  // update username, name, bio, website in lowercase and trim spaces
+  username = username.toLowerCase();
+  username = username.trim();
+
+  // check if username is not an empty string or is empty spaces and max length is 30 characters and has no spaces
+  if (!username || username === "")
+    return res.status(400).json({ error: "Username cannot be empty" });
+  if (username && username.length > 38)
+    return res
+      .status(400)
+      .json({ error: "Username cannot be more than 38 characters" });
+  if (username && username.includes(" "))
+    return res.status(400).json({ error: "Username cannot have spaces" });
+
+  // username can't have special characters except underscore
+  if (username && !username.match(/^[a-zA-Z0-9_]+$/))
+    return res
+      .status(400)
+      .json({ error: "Username cannot have special characters" });
+
+  // update username, name, bio, website
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ username })
+    .eq("id", userId)
+    .select("username")
+    .single();
+
+  if (error?.code === "23505")
+    return res.status(400).json({ error: "Username is taken" });
+  if (error) return res.status(500).json({ error: error.message });
+  console.log(data);
+  res.send(data);
+};
+
+const updateName = async (req, res) => {
+  let { name } = req.params;
+  const { id: userId } = req.user;
+
+  if (name && name.length > 60)
+    return res
+      .status(400)
+      .json({ error: "Name cannot be more than 60 characters" });
+
+  // update username, name, bio, website
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ name })
+    .eq("id", userId)
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  return res.send(data);
 };
 
 // POST /user/updateEditProfile
@@ -70,7 +157,7 @@ const updateEditProfile = async (req, res) => {
   if (username && username.length > 38)
     return res
       .status(400)
-      .json({ error: "Username cannot be more than 30 characters" });
+      .json({ error: "Username cannot be more than 38 characters" });
   if (username && username.includes(" "))
     return res.status(400).json({ error: "Username cannot have spaces" });
 
@@ -176,8 +263,8 @@ const updatePersonalInfo = async (req, res) => {
 
   // if user is under 18 years old based on the date of birth
   const today = new Date();
-  const age = today.getFullYear() - date.getFullYear();
-  const month = today.getMonth() - date.getMonth();
+  let age = today.getFullYear() - date.getFullYear();
+  let month = today.getMonth() - date.getMonth();
   if (month < 0 || (month === 0 && today.getDate() < date.getDate())) {
     age--;
   }
@@ -187,10 +274,10 @@ const updatePersonalInfo = async (req, res) => {
       .json({ error: "You must be 18 years or older to use this app" });
   }
   // if age is older than 200 years
-  if (age > 200) {
+  if (age > 130) {
     return res
       .status(400)
-      .json({ error: "You must be 200 years or younger to use this app" });
+      .json({ error: "You must be 130 years or younger to use this app" });
   }
 
   const { data, error } = await supabase
@@ -205,6 +292,20 @@ const updatePersonalInfo = async (req, res) => {
     .json({ message: "Date of birth updated successfully" });
 };
 
+// update has_onboarded to true
+const updateHasOnboarded = async (req, res) => {
+  const userId = req.user.id;
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ has_onboarded: true })
+    .eq("id", userId)
+    .select("has_onboarded")
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.send(data);
+};
+
 export {
   getProfileInitialData,
   updatePersonalInfo,
@@ -212,4 +313,7 @@ export {
   getEditProfileData,
   updateEditProfile,
   checkUsername,
+  updateUsername,
+  updateName,
+  updateHasOnboarded,
 };
