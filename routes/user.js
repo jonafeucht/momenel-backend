@@ -5,7 +5,10 @@ import {
   getEditProfileData,
   getProfileInitialData,
   updateEditProfile,
+  updateHasOnboarded,
+  updateName,
   updatePersonalInfo,
+  updateUsername,
 } from "../controllers/users.js";
 import multer from "multer";
 
@@ -14,13 +17,15 @@ const upload = multer(); //multer options
 
 router.get("/intial", getProfileInitialData);
 router.get("/checkUsername/:username", checkUsername);
+router.post("/username/:username", updateUsername);
+router.post("/name/:name", updateName);
+router.post("/hasOnboarded", updateHasOnboarded);
 router.get("/editprofile", getEditProfileData);
 router.post("/editprofile", upload.array("profile"), updateEditProfile);
 
 //todo: get user profile data =>user_id, username, bio, profile picture,cover pic, followers count, following count, count of posts  ,posts, location, website, and contact options
 //todo: get user followers
 //todo: get user following only if the user id is same as the logged in user
-//todo: edit user profile => name, username, bio and link, profile picture, cover pic, location
 router.get("/dob", getDob);
 router.post("/updatePersonalInfo", updatePersonalInfo);
 //todo: update/forgot user password

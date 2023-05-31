@@ -2,6 +2,7 @@ import express from "express";
 import postsRouter from "./routes/posts.js";
 import commentRouter from "./routes/comment.js";
 import authRouter from "./routes/auth.js";
+import suggestedProfilesRouter from "./routes/suggested_profiles.js";
 import userRouter from "./routes/user.js";
 import feedRouter from "./routes/feed.js";
 import searchRouter from "./routes/search.js";
@@ -26,6 +27,7 @@ app.use("/auth", authRouter);
 app.use(verify);
 
 // Routes
+app.use("/suggestedprofiles", suggestedProfilesRouter);
 app.use("/user", userRouter);
 app.use("/feed", feedRouter);
 app.use("/search", searchRouter);
