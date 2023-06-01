@@ -39,4 +39,69 @@ const handleFollow = async (req, res) => {
   return res.status(201).send();
 };
 
-export { handleFollow };
+// GET followers of a user
+const getFollowers = async (req, res) => {
+  const { id: userId } = req.params;
+
+  // get all the followers of the user
+  let { data, error } = await supabase
+    .from("follower")
+    .select("user:profiles!follower_follower_id_fkey(id,username, profile_url)")
+    .eq("following_id", userId)
+    .order("created_at", { ascending: false });
+
+  console.log(error);
+  if (error) return res.status(500).json({ error: error.message });
+
+  // get if user is following the user who liked the post
+  const { data: doFollow, error: error2 } = await supabase
+    .from("follower")
+    .select("following_id")
+    .eq("follower_id", userId)
+    .in(
+      "following_id",
+      data.map(({ user }) => user.id)
+    );
+
+  if (error2) return res.status(500).json({ error: "Something went wrong" });
+
+  // map the doFollow and get the following_id. then add the isFollowed to the notifications after matching the id with following_id
+  data.forEach((user) => {
+    user.isFollowed = false;
+    doFollow.forEach((follow) => {
+      if (follow.following_id === user.user.id) {
+        user.isFollowed = true;
+      }
+    });
+    if (user.user.id === userId) user.isFollowed = null;
+  });
+
+  res.send(data);
+};
+
+// GET followers of a user
+const getFollowing = async (req, res) => {
+  const { id: userId } = req.user;
+
+  // get all the followers of the user
+  let { data, error } = await supabase
+    .from("follower")
+    .select(
+      "user:profiles!follower_following_id_fkey(id,username, profile_url)"
+    )
+    .eq("follower_id", userId)
+    .order("created_at", { ascending: false });
+
+  console.log(error);
+  if (error) return res.status(500).json({ error: error.message });
+
+  // map the doFollow and get the following_id. then add the isFollowed to the notifications after matching the id with following_id
+  data.forEach((user) => {
+    user.isFollowed = true;
+    if (user.user.id === userId) user.isFollowed = null;
+  });
+
+  res.send(data);
+};
+
+export { handleFollow, getFollowers, getFollowing };

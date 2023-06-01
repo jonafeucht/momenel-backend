@@ -1,5 +1,50 @@
 import supabase from "../supabase/supabase.js";
 
+// GET /repost/:id (id of post)
+const getReposts = async (req, res) => {
+  const { id: postId } = req.params;
+  const { id: userId } = req.user;
+
+  // get all likes for this post with count sorted by created_at, also get user id, username, and profile pic for each like (join with profile table), also get if userId is following the user who liked the post
+  const { data, error } = await supabase
+    .from("repost")
+    .select(
+      `
+    user: profiles(id,username, profile_url)
+    `
+    )
+    .eq("post_id", postId)
+    .order("created_at", { ascending: false });
+
+  // console.log(error);
+  if (error) return res.status(500).json({ error: "Something went wrong" });
+
+  // get if user is following the user who liked the post
+  const { data: doFollow, error: error2 } = await supabase
+    .from("follower")
+    .select("following_id")
+    .eq("follower_id", userId)
+    .in(
+      "following_id",
+      data.map(({ user }) => user.id)
+    );
+
+  if (error2) return res.status(500).json({ error: "Something went wrong" });
+
+  // map the doFollow and get the following_id. then add the isFollowed to the notifications after matching the id with following_id
+  data.forEach((user) => {
+    user.isFollowed = false;
+    doFollow.forEach((follow) => {
+      if (follow.following_id === user.user.id) {
+        user.isFollowed = true;
+      }
+    });
+    if (user.user.id === userId) user.isFollowed = null;
+  });
+
+  res.send(data);
+};
+
 // POST /posts/repost/:id (id of post)
 const handleRepost = async (req, res) => {
   const { id: userId } = req.user;
@@ -37,4 +82,4 @@ const handleRepost = async (req, res) => {
   }
 };
 
-export { handleRepost };
+export { getReposts, handleRepost };
