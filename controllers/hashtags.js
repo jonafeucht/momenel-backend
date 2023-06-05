@@ -7,6 +7,35 @@ const getHashtags = async (req, res) => {
   res.json(data);
 };
 
+// get posts by hashtag
+const getPostsByHashtag = async (req, res) => {
+  const { id: user_id } = req.user;
+  const { id, from, to } = req.params;
+  console.log(req.params);
+  // get posts by hashtag
+  let { data, error } = await supabase
+    .from("post_hashtags")
+    .select("post(*,user:user_id(id,username,name))")
+    .eq("hashtag_id", id)
+    .range(from, to);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  // get if user_id follows hashtag
+  const { data: data2, error: error2 } = await supabase
+    .from("user_hashtag")
+    .select("hashtag_id")
+    .eq("user_id", user_id)
+    .eq("hashtag_id", id);
+
+  if (error2) return res.status(500).json({ error: error2.message });
+
+  // set if user follows hashtag by adding a new property to data
+  data = { posts: data, isFollowing: data2.length > 0 };
+
+  res.send(data);
+};
+
 // post a hashtag
 const postHashtag = async (req, res) => {
   console.log(req.body);
@@ -68,4 +97,4 @@ const followHashtag = async (req, res) => {
   return res.status(201).json(data2);
 };
 
-export { getHashtags, postHashtag, followHashtag };
+export { getHashtags, postHashtag, followHashtag, getPostsByHashtag };
