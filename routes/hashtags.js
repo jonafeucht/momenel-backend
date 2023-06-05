@@ -9,6 +9,6 @@ const router = express.Router();
 
 router.get("/", getHashtags);
 router.post("/", postHashtag);
-router.post("/follow", followHashtag);
+router.post("/follow/:id", followHashtag);
 
 export default router;

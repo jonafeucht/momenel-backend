@@ -35,16 +35,37 @@ const postHashtag = async (req, res) => {
 
 // user follow a hashtag
 const followHashtag = async (req, res) => {
-  console.log(req.body, req.user.id);
-  const { data, error } = await supabase.from("user_hashtag").insert([
-    {
-      user_id: req.user.id,
-      hashtag_id: req.body.hashtag_id,
-    },
-  ]);
+  const { data, error } = await supabase
+    .from("user_hashtag")
+    .select("id")
+    .eq("user_id", req.user.id)
+    .eq("hashtag_id", req.params.id);
 
   if (error) return res.status(500).json({ error: error.message });
-  return res.status(201).json(data);
+
+  // unfollow hashtag
+  if (data.length > 0) {
+    const { data: data2, error: error2 } = await supabase
+      .from("user_hashtag")
+      .delete()
+      .eq("id", data[0].id);
+
+    if (error2) return res.status(500).json({ error: error2.message });
+    return res.status(204).json(data2);
+  }
+
+  // follow hashtag
+  const { data: data2, error: error2 } = await supabase
+    .from("user_hashtag")
+    .insert([
+      {
+        user_id: req.user.id,
+        hashtag_id: req.params.id,
+      },
+    ]);
+
+  if (error2) return res.status(500).json({ error: error2.message });
+  return res.status(201).json(data2);
 };
 
 export { getHashtags, postHashtag, followHashtag };
