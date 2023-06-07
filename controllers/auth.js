@@ -12,7 +12,35 @@ const doesEmailExist = async (req, res) => {
   return res.status(200).json({ exists: false });
 };
 
-// this is a test route to get a token
+// passoword reset
+const resetPassword = async (req, res) => {
+  if (!req.headers.authorization) {
+    return res.status(401).json({ error: "Unauthorized" });
+  } else {
+    let newPassword = req.params.password;
+
+    // if now password then return error
+    if (!newPassword)
+      return res.status(400).json({ error: "please enter a password" });
+
+    const token = req.headers.authorization.split(" ")[1]; // Get token from Authorization header
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+    if (error)
+      return res.status(401).json({ error: "oops, something went wrong." });
+    console.log(user.id);
+    const { error2 } = await supabase.auth.admin.updateUserById(user.id, {
+      password: newPassword,
+    });
+
+    if (error2) return res.status(500).json({ error: error2.message });
+
+    res.status(200).json({ message: "success" });
+  }
+};
 
 const signIn = async (req, res) => {
   const { email, password } = req.body;
@@ -24,4 +52,4 @@ const signIn = async (req, res) => {
   res.json(data);
 };
 
-export { doesEmailExist, signIn };
+export { doesEmailExist, signIn, resetPassword };
