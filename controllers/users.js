@@ -299,7 +299,7 @@ const updateHasOnboarded = async (req, res) => {
     .from("profiles")
     .update({ has_onboarded: true })
     .eq("id", userId)
-    .select("has_onboarded")
+    .select("has_onboarded,username, profile_url")
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
