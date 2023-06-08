@@ -46,5 +46,5 @@ app.use("/hashtag", hashtagRouter);
 // ...
 
 app.listen(3000, () => {
-  console.log(`Server listening on port ${8080}`);
+  console.log(`Server listening on port ${3000}`);
 });
