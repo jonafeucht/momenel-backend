@@ -231,7 +231,19 @@ const deletePost = async (req, res) => {
   res.staus(204).json(data);
 };
 
-// module.exports = { getPosts, createPost, updatePost, deletePost };
+// get posts for a hashtag
+// GET /posts/hashtag/:hashtag
+const getPostsByHashtag = async (req, res) => {
+  const { hashtag } = req.params;
+  const { data, error } = await supabase
+    .from("post")
+    .select(
+      `*, user:profiles(id, name, username, profile_url), likes: like(user_id), comments: comment(user_id), reposts: repost(user_id), content(*)`
+    )
+    .ilike("caption", `%#${hashtag}%`);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+};
 
 export {
   getPosts,
@@ -240,4 +252,5 @@ export {
   deletePost,
   createPost,
   updatePost,
+  getPostsByHashtag,
 };
