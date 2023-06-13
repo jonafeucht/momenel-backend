@@ -128,35 +128,35 @@ const createPost = async (req, res) => {
   const { files: media } = req;
 
   // * create the post
-  // const { data, error } = await supabase
-  //   .from("post")
-  //   .insert([
-  //     {
-  //       user_id: userId,
-  //       caption,
-  //       published: media.length > 0 ? false : true,
-  //     },
-  //   ])
-  //   .select(
-  //     `*, user:profiles(id, name, username, profile_url), likes: like(user_id), comments: comment(user_id), reposts: repost(user_id), content(*)`
-  //   );
-  // if (error) return res.status(500).json({ error: error.message });
+  const { data, error } = await supabase
+    .from("post")
+    .insert([
+      {
+        user_id: userId,
+        caption,
+        published: media.length > 0 ? false : true,
+      },
+    ])
+    .select(
+      `*, user:profiles(id, name, username, profile_url), likes: like(user_id), comments: comment(user_id), reposts: repost(user_id), content(*)`
+    );
+  if (error) return res.status(500).json({ error: error.message });
 
-  // // pass caption, userId, and postId to the extractHashtags function
-  // extractHashtags(caption, userId, data[0].id);
+  // pass caption, userId, and postId to the extractHashtags function
+  extractHashtags(caption, userId, data[0].id);
 
-  // // count the likes comments and resposts of the data
-  // data[0].isLiked = false;
-  // data[0].isReposted = false;
+  // count the likes comments and resposts of the data
+  data[0].isLiked = false;
+  data[0].isReposted = false;
 
-  // data[0].likes = data[0].likes.length;
-  // data[0].comments = data[0].comments.length;
-  // data[0].reposts = data[0].reposts.length;
+  data[0].likes = data[0].likes.length;
+  data[0].comments = data[0].comments.length;
+  data[0].reposts = data[0].reposts.length;
 
-  // if (!media || media.length === 0) return res.status(201).json(data);
+  if (!media || media.length === 0) return res.status(201).json(data);
 
-  // // else if there is media files then send a resonse before creating the media
-  // res.status(201).json(data);
+  // else if there is media files then send a resonse before creating the media
+  res.status(201).json(data);
 
   //* create the media
   // loop through the media files and check if the file is a video or image
@@ -166,6 +166,7 @@ const createPost = async (req, res) => {
         let width = dimensions[index]?.width || 500,
           height = dimensions[index]?.height || 500;
         let buffer = file.buffer;
+        let format = file.mimetype.toString().split("/")[1];
 
         // if file is heic convert it to jpeg
         if (
@@ -176,111 +177,114 @@ const createPost = async (req, res) => {
             buffer,
             format: "JPEG",
           });
+          format = "jpeg";
+        }
+        console.log(file.size);
+
+        /* If the file size is greater than 10,000,000 bytes (10MB), the quality is set to 80. If the file size is
+        less than 1,000,000 bytes (1MB), the quality is set to 100. Otherwise, the quality is set to
+        88. This is done to balance the image quality and file size, so that larger images have
+        lower quality to reduce their size, while smaller images have higher quality to maintain
+        their details. */
+        let quality =
+          file.size > 10000000 ? 80 : file.size < 1000000 ? 100 : 88;
+
+        // if the file is not a gif then compress it
+        if (file.mimetype.toString() !== "image/gif") {
+          await sharp(buffer)
+            .jpeg({ mozjpeg: true, quality: quality, force: false })
+            .png({ quality: quality, force: false })
+            .toBuffer({ resolveWithObject: true })
+            .then(({ data, info }) => {
+              buffer = data;
+              width = info.width;
+              height = info.height;
+              format = info.format;
+            })
+            .catch((err) => {});
+        } else if (file.mimetype.toString() === "image/gif") {
         }
 
-        // compress the image
-        await sharp(buffer)
-          .resize(2000)
-          .jpeg({ mozjpeg: true, quality: 88, force: false })
-          .png({ quality: 88, force: false })
-          .gif({ quality: 88, force: false })
-          .toBuffer({ resolveWithObject: true })
-          .then(({ data, info }) => {
-            console.log(info);
-            buffer = data;
-            width = info.width;
-            height = info.height;
-          })
-          .catch((err) => {});
-
-        console.log(width, height);
-        res.send("ok");
         // create blurhash
-        // const { data: sharpBuffer, info } = await sharp(file.buffer)
-        //   .resize(40)
-        //   .ensureAlpha()
-        //   .raw()
-        //   .toBuffer({
-        //     resolveWithObject: true,
-        //   });
+        const { data: sharpBuffer, info } = await sharp(buffer)
+          .resize(500)
+          .ensureAlpha()
+          .raw()
+          .toBuffer({
+            resolveWithObject: true,
+          });
 
-        // const blurhash = encode(sharpBuffer, info.width, info.height, 3, 3);
+        const blurhash = encode(sharpBuffer, info.width, info.height, 3, 3);
 
-        // // create the media with type image
-        // const { data: media, error } = await supabase
-        //   .from("content")
-        //   .insert([
-        //     {
-        //       post_id: data[0].id,
-        //       type: "image",
-        //       width,
-        //       height,
-        //       blurhash,
-        //     },
-        //   ])
-        //   .select("id")
-        //   .single();
-        // console.log(error);
-        // if (error) return;
+        // create the media with type image
+        const { data: media, error } = await supabase
+          .from("content")
+          .insert([
+            {
+              post_id: data[0].id,
+              type: "image",
+              width,
+              height,
+              blurhash,
+            },
+          ])
+          .select("id")
+          .single();
 
-        // axios
-        //   .put(
-        //     `https://ny.storage.bunnycdn.com/momenel/posts/${media.id}.${
-        //       file.mimetype.toString().split("/")[1]
-        //     }`,
-        //     file.buffer,
-        //     {
-        //       headers: {
-        //         AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
-        //         "Content-Type": "application/octet-stream",
-        //       },
-        //     }
-        //   )
-        //   .then(async (response) => {
-        //     console.log(response.status);
-        //     // update status to published
-        //     await supabase
-        //       .from("content")
-        //       .update({ status: "published" })
-        //       .eq("id", media.id);
-        //   })
-        //   .catch((error) => {
-        //     console.log(error.message);
-        //   });
+        if (error) return;
+
+        axios
+          .put(
+            `${process.env.Image_Upload_Url}/${media.id}.${format}`,
+            buffer,
+            {
+              headers: {
+                AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+                "Content-Type": "application/octet-stream",
+              },
+            }
+          )
+          .then(async (response) => {
+            console.log(response.status);
+            // update status to published
+            await supabase
+              .from("content")
+              .update({ status: "published" })
+              .eq("id", media.id);
+          })
+          .catch((error) => {
+            console.log(error.message);
+          });
       } else if (file.mimetype.toString().startsWith("video")) {
         console.log("video");
       } else {
         console.log("other");
       }
     });
-  } catch (error) {
-    // //todo: set post status to error
-    // console.log(error.message);
-    console.log("error");
+  } catch (error) {}
+
+  // get all the content and if all the content is published then update the post status to published
+  const { data: content, error: contentError } = await supabase
+    .from("content")
+    .select("status")
+    .eq("post_id", data[0].id);
+
+  if (contentError) return;
+
+  // check if all the content is published
+  let isPublished = true;
+  content.forEach((item) => {
+    if (item.status !== "published") isPublished = false;
+  });
+
+  // if all the content is published then update the post status to published
+  if (isPublished) {
+    const { data: post, error: postError } = await supabase
+      .from("post")
+      .update({ published: true })
+      .eq("id", data[0].id);
+    if (postError) return;
   }
-
-  // // get all the content and if all the content is published then update the post status to published
-  // const { data: content, error: contentError } = await supabase
-  //   .from("content")
-  //   .select("status")
-  //   .eq("post_id", data[0].id);
-
-  // if (contentError) return;
-
-  // // check if all the content is published
-  // let isPublished = true;
-  // content.forEach((item) => {
-  //   if (item.status !== "published") isPublished = false;
-  // });
-
-  // // if all the content is published then update the post status to published
-  // if (isPublished) {
-  //   const { data: post, error: postError } = await supabase
-  //     .from("post")
-  //     .update({ published: true })
-  //     .eq("id", data[0].id);
-  //   if (postError) return;
-  // }
 };
 
 // PATCH /posts/:id
