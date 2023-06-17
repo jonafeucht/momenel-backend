@@ -20,7 +20,7 @@ const getDiscoverFeed = async (req, res) => {
   const { data, error } = await supabase
     .from("post_hashtags")
     .select(
-      ` post(*,  likes: like(user_id), comments: comment(user_id), reposts: repost(user_id), content(*))`
+      ` post(*,user:profiles(id,username,profile_url),  likes: like(user_id), comments: comment(user_id), reposts: repost(user_id), content(*))`
     )
     .gte("created_at", formattedDate);
 
