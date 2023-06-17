@@ -1,5 +1,7 @@
 import express from "express";
+
 import postsRouter from "./routes/posts.js";
+import hookRouter from "./routes/hook.js";
 import commentRouter from "./routes/comment.js";
 import authRouter from "./routes/auth.js";
 import suggestedProfilesRouter from "./routes/suggested_profiles.js";
@@ -24,6 +26,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/auth", authRouter);
+app.use("/hook", hookRouter);
 app.use(verify);
 
 // Routes
@@ -46,5 +49,5 @@ app.use("/hashtag", hashtagRouter);
 // ...
 
 app.listen(3000, () => {
-  console.log(`Server listening on port ${8080}`);
+  console.log(`Server listening on port ${3000}`);
 });

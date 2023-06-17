@@ -92,8 +92,6 @@ const getOnePost = async (req, res) => {
     .eq("id", id);
   if (error) return res.status(500).json({ error: error.message });
 
-  // console.log(data[0]);
-
   // count the likes comments and resposts of the data
   data[0].isLiked = false;
   data[0].isReposted = false;
@@ -268,11 +266,88 @@ const createPost = async (req, res) => {
           });
       } else if (file.mimetype.toString().startsWith("video")) {
         console.log("video");
+        let width = dimensions[index]?.width || 500,
+          height = dimensions[index]?.height || 500;
+        let buffer = file.buffer;
+        let format = file.mimetype.toString().split("/")[1];
+        console.log(format);
+        // upload the video to the server
+        const baseUrl = "https://video.bunnycdn.com/library/";
+        let libraryId = process.env.Video_Upload_ID;
+        const createOptions = {
+          method: "POST",
+          url: `${baseUrl}${libraryId}/videos`,
+          headers: {
+            AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+            "Content-Type": "application/json",
+          },
+          data: { title: `${userId}.${format}` },
+        };
+
+        axios
+          .request(createOptions)
+          .then(async (response) => {
+            // create the media with type video
+            // create the media with type video
+            const { data: media, error } = await supabase
+              .from("content")
+              .insert([
+                {
+                  id: response.data.guid,
+                  post_id: data[0].id,
+                  type: "video",
+                  width,
+                  height,
+                },
+              ])
+              .select("id")
+              .single();
+
+            if (error) return;
+
+            //* upload video
+            axios
+              .put(
+                `${baseUrl}${libraryId}/videos/${response.data.guid}`,
+                buffer,
+                {
+                  headers: {
+                    AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+                    "Content-Type": "application/octet-stream",
+                  },
+                }
+              )
+              .then((response) => {})
+              .catch(async (error) => {
+                //todo: send error notification
+                await supabase
+                  .from("content")
+                  .update({ status: "error" })
+                  .eq("id", response.data.guid);
+              });
+          })
+          .catch(async (error) => {
+            await supabase
+              .from("content")
+              .insert([
+                {
+                  status: "error",
+                  post_id: data[0].id,
+                  type: "video",
+                  width,
+                  height,
+                },
+              ])
+              .select("id")
+              .single();
+          });
       } else {
         console.log("other");
       }
     });
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+  }
 
   // get all the content and if all the content is published then update the post status to published
   const { data: content, error: contentError } = await supabase
