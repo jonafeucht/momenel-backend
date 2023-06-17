@@ -16,7 +16,7 @@ import BlockRouter from "./routes/blocked.js";
 import bodyParser from "body-parser";
 import verify from "./middleware/auth.js";
 import hashtagRouter from "./routes/hashtags.js";
-
+// import feedRouter from "./routes/feed.js";
 const app = express();
 
 // Middleware
@@ -41,7 +41,7 @@ app.use("/like", likeRouter);
 app.use("/likeComment", commentLikeRouter);
 app.use("/repost", repostRouter);
 app.use("/hashtag", hashtagRouter);
-
+// app.use("/feed", feedRouter);
 // Error handling middleware
 // ...
 

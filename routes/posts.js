@@ -6,6 +6,7 @@ import {
   getUserPosts,
   createPost,
   updatePost,
+  getPostsByHashtag,
 } from "../controllers/posts.js";
 import multer from "multer";
 
@@ -18,6 +19,7 @@ router.get("/:id", getOnePost);
 router.post("/", upload.array("content"), createPost);
 router.patch("/:id", updatePost);
 router.delete("/:id", deletePost);
+router.get("/hashtag/:hashtag", getPostsByHashtag);
 //todo: handle new posts
 //todo: list of all likes for a post
 //todo: list of all reposts for a post
