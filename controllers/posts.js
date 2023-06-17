@@ -203,6 +203,17 @@ const createPost = async (req, res) => {
             })
             .catch((err) => {});
         } else if (file.mimetype.toString() === "image/gif") {
+          await sharp(buffer, { animated: true })
+            .resize(200)
+            .toBuffer({ resolveWithObject: true })
+            .then(({ data, info }) => {
+              buffer = data;
+              width = info.width;
+              height = info.height;
+              console.log(info.width, info.height);
+              format = info.format;
+            })
+            .catch((err) => {});
         }
 
         // create blurhash
