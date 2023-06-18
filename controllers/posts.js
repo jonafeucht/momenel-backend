@@ -4,6 +4,10 @@ import axios from "axios";
 import sharp from "sharp";
 import { encode } from "blurhash";
 import convert from "heic-convert";
+import tmp from "tmp";
+import fs from "fs";
+import path from "path";
+import { fork } from "child_process";
 
 // this will get all the posts by the user
 const getUserPosts = async (req, res) => {
@@ -146,7 +150,6 @@ const createPost = async (req, res) => {
   // count the likes comments and resposts of the data
   data[0].isLiked = false;
   data[0].isReposted = false;
-
   data[0].likes = data[0].likes.length;
   data[0].comments = data[0].comments.length;
   data[0].reposts = data[0].reposts.length;
@@ -266,81 +269,54 @@ const createPost = async (req, res) => {
           });
       } else if (file.mimetype.toString().startsWith("video")) {
         console.log("video");
+        // console.log(file);
         let width = dimensions[index]?.width || 500,
           height = dimensions[index]?.height || 500;
         let buffer = file.buffer;
+        console.log("old:", Buffer.byteLength(file.buffer));
         let format = file.mimetype.toString().split("/")[1];
-        console.log(format);
-        // upload the video to the server
-        const baseUrl = "https://video.bunnycdn.com/library/";
-        let libraryId = process.env.Video_Upload_ID;
-        const createOptions = {
-          method: "POST",
-          url: `${baseUrl}${libraryId}/videos`,
-          headers: {
-            AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
-            "Content-Type": "application/json",
-          },
-          data: { title: `${userId}.${format}` },
-        };
-
-        axios
-          .request(createOptions)
-          .then(async (response) => {
-            // create the media with type video
-            // create the media with type video
-            const { data: media, error } = await supabase
-              .from("content")
-              .insert([
-                {
-                  id: response.data.guid,
-                  post_id: data[0].id,
-                  type: "video",
-                  width,
-                  height,
-                },
-              ])
-              .select("id")
-              .single();
-
-            if (error) return;
-
-            //* upload video
-            axios
-              .put(
-                `${baseUrl}${libraryId}/videos/${response.data.guid}`,
-                buffer,
-                {
-                  headers: {
-                    AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
-                    "Content-Type": "application/octet-stream",
-                  },
+        const originalFileName = file.originalname;
+        // ! COMPRESS VIDEO
+        const child = fork("helpers/video.js");
+        tmp.file(
+          { postfix: path.extname(originalFileName) },
+          (err, tempFilePath, fd, cleanupCallback) => {
+            if (err) {
+              console.log(err);
+              return;
+            }
+            tmp.file(
+              { postfix: path.extname(originalFileName) },
+              (err, finalFile, fd, cleanupCallbackNew) => {
+                if (err) {
+                  console.log(err);
+                  return;
                 }
-              )
-              .then((response) => {})
-              .catch(async (error) => {
-                //todo: send error notification
-                await supabase
-                  .from("content")
-                  .update({ status: "error" })
-                  .eq("id", response.data.guid);
-              });
-          })
-          .catch(async (error) => {
-            await supabase
-              .from("content")
-              .insert([
-                {
-                  status: "error",
-                  post_id: data[0].id,
-                  type: "video",
-                  width,
-                  height,
-                },
-              ])
-              .select("id")
-              .single();
-          });
+
+                fs.writeFile(tempFilePath, buffer, (err) => {
+                  if (err) {
+                    console.log(err);
+                  } else {
+                    console.log(tempFilePath);
+                    child.send({
+                      path: tempFilePath,
+                      post_id: data[0].id,
+                      userId,
+                      newFile: finalFile,
+                      width,
+                      height,
+                    });
+                  }
+                });
+              }
+            );
+          }
+        );
+
+        child.on("message", (message) => {
+          const { statusCode, text } = message;
+          console.log(statusCode, text);
+        });
       } else {
         console.log("other");
       }
@@ -349,28 +325,28 @@ const createPost = async (req, res) => {
     console.log(error);
   }
 
-  // get all the content and if all the content is published then update the post status to published
-  const { data: content, error: contentError } = await supabase
-    .from("content")
-    .select("status")
-    .eq("post_id", data[0].id);
+  //! get all the content and if all the content is published then update the post status to published
+  // const { data: content, error: contentError } = await supabase
+  //   .from("content")
+  //   .select("status")
+  //   .eq("post_id", data[0].id);
 
-  if (contentError) return;
+  // if (contentError) return;
 
-  // check if all the content is published
-  let isPublished = true;
-  content.forEach((item) => {
-    if (item.status !== "published") isPublished = false;
-  });
+  // // check if all the content is published
+  // let isPublished = true;
+  // content.forEach((item) => {
+  //   if (item.status !== "published") isPublished = false;
+  // });
 
-  // if all the content is published then update the post status to published
-  if (isPublished) {
-    const { data: post, error: postError } = await supabase
-      .from("post")
-      .update({ published: true })
-      .eq("id", data[0].id);
-    if (postError) return;
-  }
+  // // if all the content is published then update the post status to published
+  // if (isPublished) {
+  //   const { data: post, error: postError } = await supabase
+  //     .from("post")
+  //     .update({ published: true })
+  //     .eq("id", data[0].id);
+  //   if (postError) return;
+  // }
 };
 
 // PATCH /posts/:id

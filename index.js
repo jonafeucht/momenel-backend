@@ -1,5 +1,6 @@
 import express from "express";
-
+import helmet from "helmet";
+import compression from "compression";
 import postsRouter from "./routes/posts.js";
 import hookRouter from "./routes/hook.js";
 import commentRouter from "./routes/comment.js";
@@ -23,6 +24,8 @@ const app = express();
 
 // Middleware
 // ...
+app.use(helmet());
+app.use(compression());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/auth", authRouter);
@@ -48,6 +51,8 @@ app.use("/hashtag", hashtagRouter);
 // Error handling middleware
 // ...
 
-app.listen(3000, () => {
-  console.log(`Server listening on port ${3000}`);
+const port = process.env.PORT || 3000;
+
+app.listen(port, () => {
+  console.log(`Momenel listening on port ${port}`);
 });
