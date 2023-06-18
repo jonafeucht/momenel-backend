@@ -273,8 +273,6 @@ const createPost = async (req, res) => {
         let width = dimensions[index]?.width || 500,
           height = dimensions[index]?.height || 500;
         let buffer = file.buffer;
-        console.log("old:", Buffer.byteLength(file.buffer));
-        let format = file.mimetype.toString().split("/")[1];
         const originalFileName = file.originalname;
         // ! COMPRESS VIDEO
         const child = fork("helpers/video.js");
@@ -325,28 +323,15 @@ const createPost = async (req, res) => {
     console.log(error);
   }
 
-  //! get all the content and if all the content is published then update the post status to published
-  // const { data: content, error: contentError } = await supabase
-  //   .from("content")
-  //   .select("status")
-  //   .eq("post_id", data[0].id);
-
-  // if (contentError) return;
-
-  // // check if all the content is published
-  // let isPublished = true;
-  // content.forEach((item) => {
-  //   if (item.status !== "published") isPublished = false;
-  // });
-
-  // // if all the content is published then update the post status to published
-  // if (isPublished) {
-  //   const { data: post, error: postError } = await supabase
-  //     .from("post")
-  //     .update({ published: true })
-  //     .eq("id", data[0].id);
-  //   if (postError) return;
-  // }
+  /*check if there are any items in the `media` array whose `mimetype` property
+  starts with the string "video". If there are no such items, it updates the `published` property of
+  the first item in the `post` table of a Supabase database to `true`. */
+  if (!media.some((item) => item.mimetype.startsWith("video"))) {
+    await supabase
+      .from("post")
+      .update({ published: true })
+      .eq("id", data[0].id);
+  }
 };
 
 // PATCH /posts/:id
