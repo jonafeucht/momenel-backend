@@ -129,6 +129,8 @@ const createPost = async (req, res) => {
   const { id: userId } = req.user;
   const { files: media } = req;
 
+  console.log(caption, dimensions, userId, media);
+
   // * create the post
   const { data, error } = await supabase
     .from("post")
@@ -180,7 +182,6 @@ const createPost = async (req, res) => {
           });
           format = "jpeg";
         }
-        console.log(file.size);
 
         /* If the file size is greater than 10,000,000 bytes (10MB), the quality is set to 80. If the file size is
         less than 1,000,000 bytes (1MB), the quality is set to 100. Otherwise, the quality is set to
@@ -198,8 +199,6 @@ const createPost = async (req, res) => {
             .toBuffer({ resolveWithObject: true })
             .then(({ data, info }) => {
               buffer = data;
-              width = info.width;
-              height = info.height;
               format = info.format;
             })
             .catch((err) => {});
@@ -209,8 +208,6 @@ const createPost = async (req, res) => {
             .toBuffer({ resolveWithObject: true })
             .then(({ data, info }) => {
               buffer = data;
-              width = info.width;
-              height = info.height;
               console.log(info.width, info.height);
               format = info.format;
             })
@@ -268,8 +265,6 @@ const createPost = async (req, res) => {
             console.log(error.message);
           });
       } else if (file.mimetype.toString().startsWith("video")) {
-        console.log("video");
-        // console.log(file);
         let width = dimensions[index]?.width || 500,
           height = dimensions[index]?.height || 500;
         let buffer = file.buffer;
