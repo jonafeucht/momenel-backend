@@ -11,26 +11,26 @@ import {
 import multer from "multer";
 
 const router = express.Router();
-// const upload = multer({
-//   limits: {
-//     fieldNameSize: (req, file, cb) => {
-//       if (file.mimetype.startsWith("image/")) {
-//         console.log("here");
-//         cb(null, 10 * 1000000); // 10 MB for image files
-//       } else if (file.mimetype.startsWith("video/")) {
-//         cb(null, 50 * 1000000); // 50 MB for video files
-//       } else {
-//         cb(null, 5 * 1000000); // 5 MB for other file types
-//       }
-//     },
-//   },
-// }); //multer options
 const upload = multer({
   limits: {
-    fieldSize: 50 * 1000000,
-    files: 10,
+    fieldNameSize: (req, file, cb) => {
+      if (file.mimetype.startsWith("image")) {
+        console.log("here");
+        cb(null, 10 * 1000000); // 10 MB for image files
+      } else if (file.mimetype.startsWith("video")) {
+        cb(null, 50 * 1000000); // 50 MB for video files
+      } else {
+        cb(null, 5 * 1000000); // 5 MB for other file types
+      }
+    },
   },
 }); //multer options
+// const upload = multer({
+//   limits: {
+//     fieldSize: 50 * 1000000,
+//     files: 10,
+//   },
+// }); //multer options
 
 router.get("/user", getUserPosts);
 router.get("/", getPosts);
