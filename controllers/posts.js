@@ -129,9 +129,6 @@ const createPost = async (req, res) => {
   const { id: userId } = req.user;
   const { files: media } = req;
 
-  // console.log(media);
-  // res.status(200).send([{ caption, published: false }]);
-
   // * create the post
   const { data, error } = await supabase
     .from("post")
