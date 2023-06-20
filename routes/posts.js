@@ -27,7 +27,7 @@ const router = express.Router();
 // }); //multer options
 const upload = multer({
   limits: {
-    fieldSize: 500 * 1000000,
+    fieldSize: 50 * 1000000,
     files: 10,
   },
 }); //multer options
@@ -48,6 +48,8 @@ router.post(
           error:
             err.code === "LIMIT_FILE_SIZE"
               ? "One of the media exceeds the size limit"
+              : err.code === "LIMIT_FILE_COUNT"
+              ? "You can upload a maximum of 10 media files at a time"
               : "Something went wrong with the media upload",
         });
       } else if (err) {
