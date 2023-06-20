@@ -11,12 +11,43 @@ import {
 import multer from "multer";
 
 const router = express.Router();
-const upload = multer(); //multer options
+const upload = multer({
+  limits: {
+    fieldSize: 50 * 1000000,
+  },
+}); //multer options
 
 router.get("/user", getUserPosts);
 router.get("/", getPosts);
 router.get("/:id", getOnePost);
-router.post("/", upload.array("content"), createPost);
+// router.post("/", upload.array("content"), createPost);
+router.post(
+  "/",
+  (req, res, next) => {
+    upload.array("content")(req, res, function (err) {
+      if (err instanceof multer.MulterError) {
+        // A Multer error occurred during file upload
+        console.log("Multer Error:", err.code);
+        // Handle the error and send an appropriate response
+        return res.status(400).json({
+          error:
+            err.code === "LIMIT_FILE_SIZE"
+              ? "One of the media exceeds the size limit"
+              : "Something went wrong with the media upload",
+        });
+      } else if (err) {
+        // An unknown error occurred
+        console.log("Unknown Error:", err);
+        // Handle the error and send an appropriate response
+        return res.status(500).json({ error: "Internal server error" });
+      }
+
+      // If there are no errors, continue to the next middleware or route handler
+      next();
+    });
+  },
+  createPost
+);
 router.patch("/:id", updatePost);
 router.delete("/:id", deletePost);
 router.get("/hashtag/:hashtag", getPostsByHashtag);
