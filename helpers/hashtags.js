@@ -9,7 +9,8 @@ function extractHashtags(str, userId, postId) {
   const regexp = /#\w+/g;
 
   let tags = str.match(regexp);
-  console.log(tags);
+  // remove the # from the hashtag
+  tags = tags.map((tag) => tag.slice(1));
 
   if (tags) {
     // check if the hashtag already exists in the database

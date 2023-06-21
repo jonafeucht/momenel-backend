@@ -7,7 +7,7 @@ const getHomeFeed = async (req, res) => {};
 const getDiscoverFeed = async (req, res) => {
   const { id: userId } = req.user;
   let { from, to } = req.params;
-
+  const querySQL = `post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`;
   let posts = [];
   // get all the hashtags the user follows
   const { data, error } = await supabase
@@ -21,9 +21,7 @@ const getDiscoverFeed = async (req, res) => {
 
   const { data: data23, error: error3 } = await supabase
     .from("post_hashtags")
-    .select(
-      `post!inner(id,caption,user_id,created_at, likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash))`
-    )
+    .select(querySQL)
     .eq("post.published", true)
     .in(
       "hashtag_id",
@@ -49,9 +47,7 @@ const getDiscoverFeed = async (req, res) => {
 
   const { data: trendingPosts, error: trendingPostsError } = await supabase
     .from("post_hashtags")
-    .select(
-      `post!inner(id,caption,user_id,created_at,user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash))`
-    )
+    .select(querySQL)
     .eq("post.published", true)
     .in(
       "hashtag_id",
@@ -103,7 +99,16 @@ const getDiscoverFeed = async (req, res) => {
 
     return updatedPost;
   });
-  // get first 5 of data
+
+  // remove post dubplicates
+  posts = posts.filter((post, index, self) => {
+    return (
+      index ===
+      self.findIndex(
+        (t) => t.post.id === post.post.id && t.post.id === post.post.id
+      )
+    );
+  });
 
   return res.json({
     posts,
