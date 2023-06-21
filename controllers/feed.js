@@ -1,109 +1,107 @@
 import supabase from "../supabase/supabase.js";
 
-const currentDate = new Date();
-const sevenDaysAgo = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-const formattedDate = sevenDaysAgo
-  .toISOString()
-  .replace("T", " ")
-  .replace("Z", "+00");
-console.log(formattedDate);
-
 //todo: get home feed for a user => posts from users they follow and their own posts
 const getHomeFeed = async (req, res) => {};
 
-//todo: get discover feed for a user => posts from users they don't follow + top hashtags + following hashtags
+// get discover feed for a user => posts from users they don't follow + top hashtags + following hashtags
 const getDiscoverFeed = async (req, res) => {
+  const { id: userId } = req.user;
+  let { from, to } = req.params;
+
+  let posts = [];
   // get all the hashtags the user follows
-  //   const { data, error } = await supabase.from("hashtag").select(`*`);
-  // get most popular hashtags from last 7 days from post_hashtags
   const { data, error } = await supabase
-    .from("post_hashtags")
-    .select(
-      ` post(*,user:profiles(id,username,profile_url),  likes: like(user_id), comments: comment(user_id), reposts: repost(user_id), content(*))`
-    )
-    .gte("created_at", formattedDate);
-
-  // get the posts for all the hashtags that the user follows
-  const { data: data2, error: error2 } = await supabase
     .from("user_hashtag")
-    .select(`hashtag(id, hashtag)`);
+    .select(`hashtag_id`)
+    .eq("user_id", userId);
 
-  const hashtagIds = data2.map((hashtag) => hashtag.hashtag.id);
-  console.log(hashtagIds);
-
-  // get the posts for all the hashtags that the user follows which is in data2
-  const { data: data3, error: error3 } = await supabase
-    .from("post_hashtags")
-    .select(
-      ` post(*,  likes: like(user_id), comments: comment(user_id), reposts: repost(user_id), content(*))`
-    )
-    .in("hashtag_id", hashtagIds);
-
-  //   //   const hashtagIds = [15, 33];
-  //   // get post for a specific hashtag id
-  //   const { data: data4, error: error4 } = await supabase
-  //     .from("post_hashtags")
-  //     .select(` post(*, user:profiles(id, name, username, profile_url))`)
-  //     .in("hashtag_id", hashtagIds);
-
-  // console.log(data4);
-  //   console.log(data2);
-
-  // posts = data.concat(data3);
-
-  const posts = data
-    .concat(data3)
-    .map((post) => {
-      return post.post;
-    })
-    .sort((a, b) => {
-      const dateA = new Date(a.created_at);
-      const dateB = new Date(b.created_at);
-      return dateB - dateA;
-    });
-
-  //   get rid of duplicates from posts
-
-  const uniquePosts = {};
-  const uniqueData = [];
-
-  for (const post of posts) {
-    const postId = post.id;
-    if (!uniquePosts[postId]) {
-      uniquePosts[postId] = true;
-      uniqueData.push(post);
-    }
+  if (error) {
+    return res.status(500).json({ error: "Something went wrong" });
   }
 
-  uniqueData.forEach((post) => {
-    post.isLiked = false;
-    post.isReposted = false;
+  const { data: data23, error: error3 } = await supabase
+    .from("post_hashtags")
+    .select(
+      `post!inner(id,caption,user_id,created_at, likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash))`
+    )
+    .eq("post.published", true)
+    .in(
+      "hashtag_id",
+      data.map((hashtag) => hashtag.hashtag_id)
+    )
+    .order("created_at", { foreignTable: "post", ascending: false })
+    .range(from, to);
+  if (error3) {
+    console.log(error3);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+  posts = [...posts, ...data23];
 
-    // check if the user has liked the post
-    post.likes.forEach((like) => {
-      if (like.user_id === req.user.id) {
-        post.isLiked = true;
-      }
-    });
+  // get most popular hashtags from last 7 days from post_hashtags
+  const { data: data2, error: error2 } = await supabase
+    .from("trending_hashtags")
+    .select(`hashtag_id`);
+  if (error2) {
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+  const { data: trendingPosts, error: trendingPostsError } = await supabase
+    .from("post_hashtags")
+    .select(
+      `post!inner(id,caption,user_id,created_at,user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash))`
+    )
+    .eq("post.published", true)
+    .in(
+      "hashtag_id",
+      data2.map((hashtag) => hashtag.hashtag_id)
+    )
+    .order("created_at", { foreignTable: "post", ascending: false })
+    .range(from, parseInt(from) + Math.max(20 - posts.length, 0)); // increase the range to get more posts if there are not enough posts from the hashtags the user follows (min 10)
 
-    // check if the user has reposted the post
-    post.reposts.forEach((repost) => {
-      if (repost.user_id === req.user.id) {
-        post.isReposted = true;
-      }
-    });
+  if (trendingPostsError) {
+    console.log(trendingPostsError);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
 
-    post.likes = post.likes.length;
-    post.comments = post.comments.length;
-    post.reposts = post.reposts.length;
+  posts = [...posts, ...trendingPosts];
+
+  // sort posts by created_at
+  posts.sort((a, b) => {
+    return new Date(b.post.created_at) - new Date(a.post.created_at);
   });
+  // get all posts ids in a new array
+  const postIds = posts.map((post) => post.post.id);
 
-  if (error) return res.status(500).json({ error: error.message });
-  if (error2) return res.status(500).json({ error: error2.message });
-  if (error3) return res.status(500).json({ error: error3.message });
+  const { data: hook, error: hookerror } = await supabase.rpc(
+    "check_likes_reposts",
+    { user_id: userId, post_ids: postIds }
+  );
 
-  return res.json(uniqueData);
+  if (hookerror) {
+    console.log(hookerror);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  // add isLiked and isReposted to posts and set them true or false  hook={ liked: [ 100, 91 ], reposted: [ 99 ] }
+  posts = posts.map((post) => {
+    const { liked, reposted } = hook;
+    let updatedPost = post;
+
+    if (liked.includes(post.post.id)) {
+      updatedPost = { ...updatedPost, isLiked: true };
+    } else {
+      updatedPost = { ...updatedPost, isLiked: false };
+    }
+
+    if (reposted.includes(post.post.id)) {
+      updatedPost = { ...updatedPost, isReposted: true };
+    } else {
+      updatedPost = { ...updatedPost, isReposted: false };
+    }
+
+    return updatedPost;
+  });
+  console.log("len:", posts.length);
+  return res.json(posts);
 };
 
 export { getHomeFeed, getDiscoverFeed };
