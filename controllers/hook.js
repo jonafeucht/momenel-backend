@@ -46,4 +46,34 @@ const videoHook = async (req, res) => {
   res.status(200).end(); // Responding is important
 };
 
-export { videoHook };
+const trendingHashtagsHook = async (req, res) => {
+  const { data, error } = await supabase.rpc("get_top_hashtags");
+
+  if (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+  // delete all the hashtags from treding_hashtags and add the hashtag_id to the trending_hashtags table from data2
+  const { data: data2, error: error2 } = await supabase
+    .from("trending_hashtags")
+    .delete()
+    .neq("hashtag_id", 0);
+
+  if (error2) {
+    console.log(error2);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  const { data: data3, error: error3 } = await supabase
+    .from("trending_hashtags")
+    .insert(data.map((hashtag) => ({ hashtag_id: hashtag.hashtag_id })));
+
+  if (error3) {
+    console.log(error3);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  res.send("ok");
+};
+
+export { videoHook, trendingHashtagsHook };
