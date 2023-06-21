@@ -7,12 +7,12 @@ const getHomeFeed = async (req, res) => {};
 const getDiscoverFeed = async (req, res) => {
   const { id: userId } = req.user;
   let { from, to } = req.params;
-
+  const querySQL = `post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`;
   let posts = [];
   // get all the hashtags the user follows
   const { data, error } = await supabase
     .from("user_hashtag")
-    .select(`hashtag_id`)
+    .select(`hashtag(id,hashtag)`)
     .eq("user_id", userId);
 
   if (error) {
@@ -21,13 +21,11 @@ const getDiscoverFeed = async (req, res) => {
 
   const { data: data23, error: error3 } = await supabase
     .from("post_hashtags")
-    .select(
-      `post!inner(id,caption,user_id,created_at, likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash))`
-    )
+    .select(querySQL)
     .eq("post.published", true)
     .in(
       "hashtag_id",
-      data.map((hashtag) => hashtag.hashtag_id)
+      data.map((h) => h.hashtag.id)
     )
     .order("created_at", { foreignTable: "post", ascending: false })
     .range(from, to);
@@ -40,19 +38,20 @@ const getDiscoverFeed = async (req, res) => {
   // get most popular hashtags from last 7 days from post_hashtags
   const { data: data2, error: error2 } = await supabase
     .from("trending_hashtags")
-    .select(`hashtag_id`);
+    .select(`hashtag(id,hashtag)`);
+
   if (error2) {
+    console.log(error2);
     return res.status(500).json({ error: "Something went wrong" });
   }
+
   const { data: trendingPosts, error: trendingPostsError } = await supabase
     .from("post_hashtags")
-    .select(
-      `post!inner(id,caption,user_id,created_at,user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash))`
-    )
+    .select(querySQL)
     .eq("post.published", true)
     .in(
       "hashtag_id",
-      data2.map((hashtag) => hashtag.hashtag_id)
+      data2.map((h) => h.hashtag.id)
     )
     .order("created_at", { foreignTable: "post", ascending: false })
     .range(from, parseInt(from) + Math.max(20 - posts.length, 0)); // increase the range to get more posts if there are not enough posts from the hashtags the user follows (min 10)
@@ -100,8 +99,22 @@ const getDiscoverFeed = async (req, res) => {
 
     return updatedPost;
   });
-  console.log("len:", posts.length);
-  return res.json(posts);
+
+  // remove post dubplicates
+  posts = posts.filter((post, index, self) => {
+    return (
+      index ===
+      self.findIndex(
+        (t) => t.post.id === post.post.id && t.post.id === post.post.id
+      )
+    );
+  });
+
+  return res.json({
+    posts,
+    trendingHashtags: data2,
+    followingHashtags: data.splice(5, data.length - 5),
+  });
 };
 
 export { getHomeFeed, getDiscoverFeed };
