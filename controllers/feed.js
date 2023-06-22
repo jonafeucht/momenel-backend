@@ -27,7 +27,7 @@ const getDiscoverFeed = async (req, res) => {
       "hashtag_id",
       data.map((h) => h.hashtag.id)
     )
-    .order("created_at", { foreignTable: "post", ascending: false })
+    .order("created_at", { ascending: false })
     .range(from, to);
   if (error3) {
     console.log(error3);
@@ -53,7 +53,8 @@ const getDiscoverFeed = async (req, res) => {
       "hashtag_id",
       data2.map((h) => h.hashtag.id)
     )
-    .order("created_at", { foreignTable: "post", ascending: false })
+    .order("created_at", { ascending: false })
+    // .range(from, to);
     .range(from, parseInt(from) + Math.max(20 - posts.length, 0)); // increase the range to get more posts if there are not enough posts from the hashtags the user follows (min 10)
 
   if (trendingPostsError) {
