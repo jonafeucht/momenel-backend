@@ -206,7 +206,6 @@ const createPost = async (req, res) => {
             .toBuffer({ resolveWithObject: true })
             .then(({ data, info }) => {
               buffer = data;
-              console.log(info.width, info.height);
               format = info.format;
             })
             .catch((err) => {});
@@ -233,6 +232,7 @@ const createPost = async (req, res) => {
               width,
               height,
               blurhash,
+              format,
             },
           ])
           .select("id")

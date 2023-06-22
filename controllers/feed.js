@@ -63,10 +63,6 @@ const getDiscoverFeed = async (req, res) => {
 
   posts = [...posts, ...trendingPosts];
 
-  // sort posts by created_at
-  posts.sort((a, b) => {
-    return new Date(b.post.created_at) - new Date(a.post.created_at);
-  });
   // get all posts ids in a new array
   const postIds = posts.map((post) => post.post.id);
 
@@ -108,6 +104,11 @@ const getDiscoverFeed = async (req, res) => {
         (t) => t.post.id === post.post.id && t.post.id === post.post.id
       )
     );
+  });
+
+  // sort posts by created_at
+  posts.sort((a, b) => {
+    return new Date(b.post.created_at) - new Date(a.post.created_at);
   });
 
   return res.json({
