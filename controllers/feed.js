@@ -6,7 +6,8 @@ const getHomeFeed = async (req, res) => {};
 // get discover feed for a user => posts from users they don't follow + top hashtags + following hashtags
 const getDiscoverFeed = async (req, res) => {
   const { id: userId } = req.user;
-  let { from, to } = req.params;
+  let { from, to, ids } = req.params;
+
   const querySQL = `post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`;
   let posts = [];
   // get all the hashtags the user follows
@@ -54,8 +55,7 @@ const getDiscoverFeed = async (req, res) => {
       data2.map((h) => h.hashtag.id)
     )
     .order("created_at", { ascending: false })
-    // .range(from, to);
-    .range(from, parseInt(from) + Math.max(20 - posts.length, 0)); // increase the range to get more posts if there are not enough posts from the hashtags the user follows (min 10)
+    .range(from, to);
 
   if (trendingPostsError) {
     console.log(trendingPostsError);
@@ -97,6 +97,10 @@ const getDiscoverFeed = async (req, res) => {
     return updatedPost;
   });
 
+  // remove post dubplicates that have post.id from the ids after coverting ids to array and type int
+  ids = ids.split(",").map((id) => parseInt(id));
+  posts = posts.filter((post) => !ids.includes(post.post.id));
+
   // remove post dubplicates
   posts = posts.filter((post, index, self) => {
     return (
@@ -112,6 +116,9 @@ const getDiscoverFeed = async (req, res) => {
     return new Date(b.post.created_at) - new Date(a.post.created_at);
   });
 
+  // log the post ids on one line
+  console.log(posts.map((post) => post.post.id).join(", "));
+  console.log(posts.length);
   return res.json({
     posts,
     trendingHashtags: data2,
