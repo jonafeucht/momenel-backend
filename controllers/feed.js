@@ -1,7 +1,117 @@
 import supabase from "../supabase/supabase.js";
 
 //todo: get home feed for a user => posts from users they follow and their own posts
-const getHomeFeed = async (req, res) => {};
+const getHomeFeed = async (req, res) => {
+  const { id: userId } = req.user;
+  let { from, to, ids } = req.params;
+  console.log(userId);
+  const querySQL = `post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`;
+  let posts = [];
+
+  // get all users the user follows
+  let { data, error } = await supabase
+    .from("follower")
+    .select(`following_id`)
+    .eq("follower_id", userId);
+
+  if (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  // // get all posts from users the user follows
+  const { data: followingPosts, error: error2 } = await supabase
+    .from("post")
+    .select(
+      `id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format)`
+    )
+    .eq("published", true)
+    .in(
+      "user_id",
+      data.map((f) => f.following_id)
+    )
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error2) {
+    console.log(error2);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+  // add to posts with type post
+  posts = [...posts, ...followingPosts.map((p) => ({ type: "post", ...p }))];
+
+  // get all reposts from the followed users
+  const { data: reposts, error: error3 } = await supabase
+    .from("repost")
+    .select(
+      `id,created_at,repostedBy:profiles(id,username),post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`
+    )
+    .eq("post.published", true)
+    .in(
+      "user_id",
+      data.map((f) => f.following_id)
+    )
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error3) {
+    console.log(error3);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  // add to posts with type repost
+  posts = [...posts, ...reposts.map((r) => ({ type: "repost", ...r }))];
+
+  // get all posts ids in a new array based on the type
+  const postIds = posts.map((post) =>
+    post.type === "post" ? post.id : post.post.id
+  );
+
+  const { data: hook, error: hookerror } = await supabase.rpc(
+    "check_likes_reposts",
+    { user_id: userId, post_ids: postIds }
+  );
+
+  if (hookerror) {
+    console.log(hookerror);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  console.log(hook);
+  // add isLiked and isReposted to posts and set them true or false  hook={ liked: [ 100, 91 ], reposted: [ 99 ] }
+  posts = posts.map((post) => {
+    const { liked, reposted } = hook;
+    let updatedPost = post;
+    let id = post.type === "post" ? post.id : post.post.id;
+
+    if (liked.includes(id)) {
+      updatedPost = { ...updatedPost, isLiked: true };
+    } else {
+      updatedPost = { ...updatedPost, isLiked: false };
+    }
+
+    if (reposted.includes(id)) {
+      updatedPost = { ...updatedPost, isReposted: true };
+    } else {
+      updatedPost = { ...updatedPost, isReposted: false };
+    }
+
+    return updatedPost;
+  });
+
+  // remove duplicates
+  posts = posts.filter(
+    (post, index, self) =>
+      index === self.findIndex((p) => p.id === post.id && p.type === post.type)
+  );
+
+  // sort by created_at
+  posts = posts.sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  res.json(posts);
+};
 
 // get discover feed for a user => posts from users they don't follow + top hashtags + following hashtags
 const getDiscoverFeed = async (req, res) => {
