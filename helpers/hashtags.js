@@ -9,10 +9,10 @@ function extractHashtags(str, userId, postId) {
   const regexp = /#\w+/g;
 
   let tags = str.match(regexp);
-  // remove the # from the hashtag
-  tags = tags.map((tag) => tag.slice(1));
 
   if (tags) {
+    // remove the # from the hashtag
+    tags = tags.map((tag) => tag.slice(1));
     // check if the hashtag already exists in the database
     tags.forEach(async (tag) => {
       const { data, error } = await supabase
