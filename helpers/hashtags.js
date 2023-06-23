@@ -9,7 +9,7 @@ function extractHashtags(str, userId, postId) {
   const regexp = /#\w+/g;
 
   let tags = str.match(regexp);
-
+    
   if (tags) {
     // remove the # from the hashtag
     tags = tags.map((tag) => tag.slice(1));
