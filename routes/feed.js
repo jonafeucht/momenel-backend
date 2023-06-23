@@ -3,9 +3,7 @@ import { getHomeFeed, getDiscoverFeed } from "../controllers/feed.js";
 
 const router = express.Router();
 
-//todo: get home feed for a user => posts from users they follow and their own posts
-//todo: get discover feed for a user => posts from users they don't follow + top hashtags + following hashtags
-
+router.get("/home/:ids/:from/:to", getHomeFeed);
 router.get("/discover/:ids/:from/:to", getDiscoverFeed);
 
 export default router;
