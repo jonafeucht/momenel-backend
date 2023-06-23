@@ -77,7 +77,6 @@ const getHomeFeed = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 
-  console.log(hook);
   // add isLiked and isReposted to posts and set them true or false  hook={ liked: [ 100, 91 ], reposted: [ 99 ] }
   posts = posts.map((post) => {
     const { liked, reposted } = hook;
