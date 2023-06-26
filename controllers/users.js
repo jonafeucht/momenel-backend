@@ -308,25 +308,99 @@ const updateHasOnboarded = async (req, res) => {
 
 // get own profile data
 const getProfile = async (req, res) => {
-  const userId = req.user.id;
-  let { from, to } = req.params;
+  let userId = req.user.id;
+  let { from, to, username } = req.params;
+  if (username && username !== "null") {
+    // get user id from username
+    const { data: user, error: userError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .single();
+
+    if (userError) return res.status(500).json({ error: userError.message });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // check if the user has blocked the profile
+    const { data: blocked, error: blockedError } = await supabase
+      .from("blocked")
+      .select("user_id, blocked_id")
+      .eq("user_id", userId)
+      .eq("blocked_id", user.id);
+
+    // .not("id", "in", `(5,6,7,10)`);
+
+    if (blockedError)
+      return res.status(500).json({ error: blockedError.message });
+    if (blocked.length > 0)
+      return res.json({
+        profile: {
+          isBlockedByYou: true,
+        },
+        posts: [],
+      });
+
+    // check if the user is blocked by the profile
+    const { data: blockedBy, error: blockedByError } = await supabase
+      .from("blocked")
+      .select("user_id, blocked_id")
+      .eq("user_id", user.id)
+      .eq("blocked_id", userId);
+
+    if (blockedByError)
+      return res.status(500).json({ error: blockedByError.message });
+
+    if (blockedBy.length > 0)
+      return res.json({
+        profile: {
+          isBlockedByUser: true,
+        },
+        posts: [],
+      });
+
+    userId = user.id;
+  }
+
   let data = {};
+  let posts = [];
   // get posts that equal to the user id
-  const { data: posts, error: postsError } = await supabase
+  const { data: postsUser, error: postsError } = await supabase
     .from("post")
     .select(
       `published,id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format)`
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .range(from, to);
+    .range(from, to)
+    .limit(10);
 
   if (postsError) return res.status(500).json({ error: postsError.message });
+  // add to data with type post
+  posts = [...posts, ...postsUser.map((p) => ({ type: "post", ...p }))];
 
-  data = { ...data, posts };
+  // get all reposts from the followed users
+  const { data: reposts, error: error3 } = await supabase
+    .from("repost")
+    .select(
+      `id,created_at,repostedBy:profiles(id,username),post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .range(from, to)
+    .limit(10);
 
-  // get post id's
-  const postIds = posts.map((post) => post.id);
+  if (error3) {
+    console.log(error3);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  // add to posts with type repost
+  posts = [...posts, ...reposts.map((r) => ({ type: "repost", ...r }))];
+
+  // get all posts ids in a new array based on the type
+  const postIds = posts.map((post) =>
+    post.type === "post" ? post.id : post.post.id
+  );
 
   const { data: hook, error: hookerror } = await supabase.rpc(
     "check_likes_reposts",
@@ -337,19 +411,37 @@ const getProfile = async (req, res) => {
     console.log(hookerror);
     return res.status(500).json({ error: "Something went wrong" });
   }
+
   // add isLiked and isReposted to posts and set them true or false  hook={ liked: [ 100, 91 ], reposted: [ 99 ] }
-  data.posts = data.posts.map((post) => {
-    if (hook.liked.includes(post.id)) {
-      post.isLiked = true;
+  posts = posts.map((post) => {
+    const { liked, reposted } = hook;
+    let updatedPost = post;
+    let id = post.type === "post" ? post.id : post.post.id;
+
+    if (liked.includes(id)) {
+      updatedPost = { ...updatedPost, isLiked: true };
     } else {
-      post.isLiked = false;
+      updatedPost = { ...updatedPost, isLiked: false };
     }
-    if (hook.reposted.includes(post.id)) {
-      post.isReposted = true;
+
+    if (reposted.includes(id)) {
+      updatedPost = { ...updatedPost, isReposted: true };
     } else {
-      post.isReposted = false;
+      updatedPost = { ...updatedPost, isReposted: false };
     }
-    return post;
+
+    return updatedPost;
+  });
+
+  // remove duplicates
+  posts = posts.filter(
+    (post, index, self) =>
+      index === self.findIndex((p) => p.id === post.id && p.type === post.type)
+  );
+
+  // sort by created_at
+  posts = posts.sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
   });
 
   // get profile data
@@ -396,6 +488,23 @@ const getProfile = async (req, res) => {
 
   if (likesError) return res.status(500).json({ error: likesError.message });
 
+  // if username then find if the req.user.id is following the userId
+  if (username && username !== "null") {
+    const { data: isFollowing, error: isFollowingError } = await supabase
+      .from("follower")
+      .select("follower_id")
+      .eq("follower_id", req.user.id)
+      .eq("following_id", userId);
+
+    if (isFollowingError)
+      return res.status(500).json({ error: isFollowingError.message });
+
+    profile = {
+      ...profile,
+      isFollowing: isFollowing.length > 0 ? true : false,
+    };
+  }
+
   profile = {
     ...profile,
     followers: followers.length,
@@ -403,7 +512,7 @@ const getProfile = async (req, res) => {
     likes_count: likes,
   };
 
-  data = { profile, ...data };
+  data = { profile, posts };
 
   res.send(data);
 };
