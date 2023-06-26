@@ -318,7 +318,7 @@ const getProfile = async (req, res) => {
       .eq("username", username)
       .single();
 
-    if (userError) return res.status(500).json({ error: userError.message });
+    if (userError) return res.status(500).json({ error: "No user exists." });
     if (!user) return res.status(404).json({ error: "User not found" });
 
     // check if the user has blocked the profile
