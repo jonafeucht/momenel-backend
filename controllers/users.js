@@ -306,6 +306,108 @@ const updateHasOnboarded = async (req, res) => {
   return res.send(data);
 };
 
+// get own profile data
+const getProfile = async (req, res) => {
+  const userId = req.user.id;
+  let { from, to } = req.params;
+  let data = {};
+  // get posts that equal to the user id
+  const { data: posts, error: postsError } = await supabase
+    .from("post")
+    .select(
+      `published,id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format)`
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (postsError) return res.status(500).json({ error: postsError.message });
+
+  data = { ...data, posts };
+
+  // get post id's
+  const postIds = posts.map((post) => post.id);
+
+  const { data: hook, error: hookerror } = await supabase.rpc(
+    "check_likes_reposts",
+    { user_id: userId, post_ids: postIds }
+  );
+
+  if (hookerror) {
+    console.log(hookerror);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+  // add isLiked and isReposted to posts and set them true or false  hook={ liked: [ 100, 91 ], reposted: [ 99 ] }
+  data.posts = data.posts.map((post) => {
+    if (hook.liked.includes(post.id)) {
+      post.isLiked = true;
+    } else {
+      post.isLiked = false;
+    }
+    if (hook.reposted.includes(post.id)) {
+      post.isReposted = true;
+    } else {
+      post.isReposted = false;
+    }
+    return post;
+  });
+
+  // get profile data
+  let { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select(`id,username,profile_url,blurhash, name, bio, website, location`)
+    .eq("id", userId)
+    .single();
+
+  if (profileError)
+    return res.status(500).json({ error: profileError.message });
+
+  // get count of followers and following
+  const { data: followers, error: followersError } = await supabase
+    .from("follower")
+    .select("follower_id")
+    .eq("following_id", userId);
+
+  if (followersError)
+    return res.status(500).json({ error: followersError.message });
+
+  const { data: following, error: followingError } = await supabase
+    .from("follower")
+    .select("following_id")
+    .eq("follower_id", userId);
+
+  if (followingError)
+    return res.status(500).json({ error: followingError.message });
+
+  // get count of likes recieved by the user on all posts
+  const { data: allPostIds, error: allPostIdsError } = await supabase
+    .from("post")
+    .select("id")
+    .eq("user_id", userId);
+
+  if (allPostIdsError)
+    return res.status(500).json({ error: allPostIdsError.message });
+
+  const allPostIdsArray = allPostIds.map((post) => post.id);
+  const { count: likes, error: likesError } = await supabase
+    .from("like")
+    .select("*", { count: "exact", head: true })
+    .in("post_id", allPostIdsArray);
+
+  if (likesError) return res.status(500).json({ error: likesError.message });
+
+  profile = {
+    ...profile,
+    followers: followers.length,
+    following: following.length,
+    likes_count: likes,
+  };
+
+  data = { profile, ...data };
+
+  res.send(data);
+};
+
 export {
   getProfileInitialData,
   updatePersonalInfo,
@@ -316,4 +418,5 @@ export {
   updateUsername,
   updateName,
   updateHasOnboarded,
+  getProfile,
 };

@@ -4,8 +4,6 @@ import supabase from "../supabase/supabase.js";
 const getHomeFeed = async (req, res) => {
   const { id: userId } = req.user;
   let { from, to, ids } = req.params;
-  console.log(userId);
-  const querySQL = `post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`;
   let posts = [];
 
   // get all users the user follows
@@ -19,7 +17,7 @@ const getHomeFeed = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 
-  // // get all posts from users the user follows
+  // get all posts from users the user follows
   const { data: followingPosts, error: error2 } = await supabase
     .from("post")
     .select(

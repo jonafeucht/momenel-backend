@@ -3,6 +3,7 @@ import {
   checkUsername,
   getDob,
   getEditProfileData,
+  getProfile,
   getProfileInitialData,
   updateEditProfile,
   updateHasOnboarded,
@@ -22,13 +23,11 @@ router.post("/name/:name", updateName);
 router.post("/hasOnboarded", updateHasOnboarded);
 router.get("/editprofile", getEditProfileData);
 router.post("/editprofile", upload.array("profile"), updateEditProfile);
-
-//todo: get user profile data =>user_id, username, bio, profile picture followers count, following count, count of posts  ,posts, location, website, and contact options
+router.get("/profile/:from/:to", getProfile);
 //todo: get user followers
 //todo: get user following only if the user id is same as the logged in user
 router.get("/dob", getDob);
 router.post("/updatePersonalInfo", updatePersonalInfo);
-//todo: update/forgot user password
 //todo: delete user account
 
 export default router;
