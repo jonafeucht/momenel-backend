@@ -335,6 +335,7 @@ const getProfile = async (req, res) => {
     if (blocked.length > 0)
       return res.json({
         profile: {
+          id: user.id,
           isBlockedByYou: true,
         },
         posts: [],
@@ -353,6 +354,7 @@ const getProfile = async (req, res) => {
     if (blockedBy.length > 0)
       return res.json({
         profile: {
+          id: user.id,
           isBlockedByUser: true,
         },
         posts: [],
