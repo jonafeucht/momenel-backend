@@ -47,7 +47,6 @@ app.use("/like", likeRouter);
 app.use("/likeComment", commentLikeRouter);
 app.use("/repost", repostRouter);
 app.use("/hashtag", hashtagRouter);
-// app.use("/feed", feedRouter);
 // Error handling middleware
 // ...
 

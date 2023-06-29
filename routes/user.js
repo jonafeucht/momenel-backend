@@ -22,7 +22,7 @@ router.post("/username/:username", updateUsername);
 router.post("/name/:name", updateName);
 router.post("/hasOnboarded", updateHasOnboarded);
 router.get("/editprofile", getEditProfileData);
-router.post("/editprofile", upload.array("profile"), updateEditProfile);
+router.post("/editprofile", upload.single("profile"), updateEditProfile);
 router.get("/profile/:username/:from/:to", getProfile);
 //todo: get user followers
 //todo: get user following only if the user id is same as the logged in user
