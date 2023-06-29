@@ -286,7 +286,7 @@ const updateEditProfile = async (req, res) => {
     // upload new profile picture
     if (profile.mimetype.toString().startsWith("image")) {
       let width,
-        height = 300;
+        height = 1000;
       let buffer = profile.buffer;
       let format = profile.mimetype.toString().split("/")[1];
 
