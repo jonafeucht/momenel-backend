@@ -376,10 +376,35 @@ const updatePost = async (req, res) => {
 
 // DELETE /posts/:id
 const deletePost = async (req, res) => {
-  const { id } = req.params;
-  const { data, error } = await supabase.from("post").delete().eq("id", id);
-  if (error) return res.status(500).json({ error: error.message });
-  res.staus(204).json(data);
+  const { id: postId } = req.params;
+  const { id: userId } = req.user;
+
+  // get id of the user who created the post
+  const { data: post, error } = await supabase
+    .from("post")
+    .select("user_id")
+    .eq("id", postId)
+    .single();
+
+  if (error) return res.status(500).json({ error: "no post found" });
+
+  // check if the user is the owner of the post
+  if (post.user_id !== userId) {
+    return res
+      .status(403)
+      .json({ error: "You are not allowed to delete this post" });
+  }
+
+  // delete the post
+  const { data, error: deleteError } = await supabase
+    .from("post")
+    .delete()
+    .eq("id", postId);
+
+  if (deleteError)
+    return res.status(500).json({ error: "Something went wrong" });
+
+  res.status(204).send();
 };
 
 // get posts for a hashtag
