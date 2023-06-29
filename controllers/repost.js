@@ -82,4 +82,33 @@ const handleRepost = async (req, res) => {
   }
 };
 
-export { getReposts, handleRepost };
+const deleteRepost = async (req, res) => {
+  const { id: repostId } = req.params;
+  const { id: userId } = req.user;
+
+  // get id of the user who created the repost
+  const { data: repost, error } = await supabase
+    .from("repost")
+    .select("user_id")
+    .eq("id", repostId)
+    .single();
+
+  if (error) return res.status(500).json({ error: "no repost found" });
+
+  // check if the user is the owner of the repost
+  if (repost.user_id !== userId)
+    return res.status(401).json({ error: "Unauthorized" });
+
+  // delete the repost
+  const { data: deleteData, error: deleteError } = await supabase
+    .from("repost")
+    .delete()
+    .eq("id", repostId);
+
+  if (deleteError)
+    return res.status(500).json({ error: "Something went wrong" });
+
+  res.status(204).send();
+};
+
+export { getReposts, handleRepost, deleteRepost };
