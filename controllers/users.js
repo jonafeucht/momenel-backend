@@ -1,4 +1,9 @@
+import sharp from "sharp";
 import supabase from "../supabase/supabase.js";
+import convert from "heic-convert";
+import { encode } from "blurhash";
+import { randomUUID } from "crypto";
+import axios from "axios";
 
 // return has_onBoarded, username, profile_url
 const getProfileInitialData = async (req, res) => {
@@ -141,9 +146,9 @@ const updateName = async (req, res) => {
 // POST /user/updateEditProfile
 const updateEditProfile = async (req, res) => {
   const { id: userId } = req.user;
-  let { username, name, bio, website, profile_url } = req.body;
-  const { files: profile } = req;
-  console.log(req.body);
+  let { username, name, bio, website, profile_url, deletePofile } = req.body;
+  const { file: profile } = req;
+
   // update username, name, bio, website in lowercase and trim spaces
   username = username.toLowerCase();
   username = username.trim();
@@ -205,7 +210,7 @@ const updateEditProfile = async (req, res) => {
   }
 
   // update username, name, bio, website
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("profiles")
     .update({ username, name, bio, website })
     .eq("id", userId)
@@ -215,18 +220,155 @@ const updateEditProfile = async (req, res) => {
   if (error?.code === "23505")
     return res.status(400).json({ error: "Username is taken" });
   if (error) return res.status(500).json({ error: error.message });
+  console.log(profile);
+  //delete old profile and update new profile picture with data.profile_url
+  if (profile === undefined) {
+    if (data.profile_url !== null) {
+      axios
+        .delete(`${process.env.Profile_Upload_Url}/${data.profile_url}`, {
+          headers: {
+            AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+            "Content-Type": "application/octet-stream",
+          },
+        })
+        .then(async (response) => {
+          console.log(response.status);
+          // update status to published
+          const { data: d2, error } = await supabase
+            .from("profiles")
+            .update({ profile_url: null, blurhash: null })
+            .eq("id", userId)
+            .select("username, name, bio, website, profile_url,blurhash")
+            .single();
 
-  // delete old profile and update new profile picture
-
-  if (profile?.length > 0) {
+          if (error) return res.status(500).json({ error: error.message });
+          return res.json(d2);
+        })
+        .catch((error) => {
+          console.log(error.message);
+          return res.status(500).json({
+            error: "An error occured while uploading the profile image.",
+          });
+        });
+    }
+  } else if (profile) {
+    console.log("upload profile");
     console.log(profile);
-    console.log("old pic", data.profile_url);
-    console.log("update profile picture");
-  } else if (profile_url === "null") {
-    console.log("delete profile picture");
-  }
+    // delete old profile picture
+    if (data.profile_url) {
+      axios
+        .delete(`${process.env.Profile_Upload_Url}/${data.profile_url}`, {
+          headers: {
+            AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+            "Content-Type": "application/octet-stream",
+          },
+        })
+        .then(async (response) => {
+          console.log(response.status);
+          // update status to published
+          const { data: d2, error } = await supabase
+            .from("profiles")
+            .update({ profile_url: null, blurhash: null })
+            .eq("id", userId)
+            .select("username, name, bio, website, profile_url,blurhash")
+            .single();
 
-  res.json(data);
+          if (error) return res.status(500).json({ error: error.message });
+        })
+        .catch((error) => {
+          console.log(error.message);
+          return res.status(500).json({
+            error: "An error occured while uploading the profile image.",
+          });
+        });
+    }
+
+    // upload new profile picture
+    if (profile.mimetype.toString().startsWith("image")) {
+      let width,
+        height = 300;
+      let buffer = profile.buffer;
+      let format = profile.mimetype.toString().split("/")[1];
+
+      // if file is heic convert it to jpeg
+      if (
+        profile.mimetype.toString() === "image/heic" ||
+        profile.mimetype.toString() === "image/heif"
+      ) {
+        buffer = await convert({
+          buffer,
+          format: "JPEG",
+        });
+        format = "jpeg";
+      }
+
+      // if the file is not a gif then compress it
+      if (profile.mimetype.toString() !== "image/gif") {
+        await sharp(buffer)
+          .resize(width, height, { fit: "cover" })
+          .jpeg({ mozjpeg: true, quality: 100, force: false })
+          .png({ quality: 100, force: false })
+          .toBuffer({ resolveWithObject: true })
+          .then(({ data, info }) => {
+            buffer = data;
+            format = info.format;
+          })
+          .catch((err) => {});
+      } else if (profile.mimetype.toString() === "image/gif") {
+        await sharp(buffer, { animated: true })
+          .resize(200)
+          .toBuffer({ resolveWithObject: true })
+          .then(({ data, info }) => {
+            buffer = data;
+            format = info.format;
+          })
+          .catch((err) => {});
+      }
+
+      // create blurhash
+      const { data: sharpBuffer, info } = await sharp(buffer)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({
+          resolveWithObject: true,
+        });
+
+      const blurhash = encode(sharpBuffer, info.width, info.height, 3, 3);
+
+      // create a uuid
+      const uuid = randomUUID();
+
+      // upload image to supabase storage
+      axios
+        .put(`${process.env.Profile_Upload_Url}/${uuid}.${format}`, buffer, {
+          headers: {
+            AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+            "Content-Type": "application/octet-stream",
+          },
+        })
+        .then(async (response) => {
+          // update status to published
+          const { data: d2, error } = await supabase
+            .from("profiles")
+            .update({ profile_url: `${uuid}.${format}`, blurhash })
+            .eq("id", userId)
+            .select("username, name, bio, website, profile_url,blurhash")
+            .single();
+
+          if (error) return res.status(500).json({ error: error.message });
+          return res.json(d2);
+        })
+        .catch((error) => {
+          console.log(error.message);
+          // return res.status(500).json({
+          //   error: "An error accured while uploading the profile image.",
+          // });
+        });
+    }
+  } else {
+    console.log("no profile");
+    res.status(400).json({ error: "No profile image provided" });
+  }
 };
 
 //get date of birth

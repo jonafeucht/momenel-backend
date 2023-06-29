@@ -35,7 +35,6 @@ const upload = multer({
 router.get("/user", getUserPosts);
 router.get("/", getPosts);
 router.get("/:id", getOnePost);
-// router.post("/", upload.array("content"), createPost);
 router.post(
   "/",
   (req, res, next) => {
