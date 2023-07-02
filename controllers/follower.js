@@ -4,7 +4,7 @@ import supabase from "../supabase/supabase.js";
 const handleFollow = async (req, res) => {
   const { id: user_id } = req.user;
   const { id: following_id } = req.params;
-
+  console.log(following_id);
   // check if user_id is already following follower_id
   const { data, error } = await supabase
     .from("follower")
@@ -26,6 +26,16 @@ const handleFollow = async (req, res) => {
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
+    //todo: remove the follow notification
+    const { data: data3, error: error3 } = await supabase
+      .from("notifications")
+      .delete()
+      .eq("sender_id", user_id)
+      .eq("receiver_id", following_id)
+      .eq("type", "follow");
+
+    if (error3) return res.status(500).json({ error: error3.message });
+
     return res.status(204).send();
   }
 
@@ -35,6 +45,20 @@ const handleFollow = async (req, res) => {
     .from("follower")
     .insert([{ follower_id: user_id, following_id: following_id }]);
   if (error2) return res.status(500).json({ error: error2.message });
+
+  //todo: send the follow notification
+  const { data: data3, error: error3 } = await supabase
+    .from("notifications")
+    .insert([
+      {
+        sender_id: user_id,
+        receiver_id: following_id,
+        type: "follow",
+        isRead: false,
+      },
+    ]);
+
+  // if (error3) return res.status(500).json({ error: error3.message });
 
   return res.status(201).send();
 };
