@@ -1,4 +1,3 @@
-import { log } from "console";
 import supabase from "../supabase/supabase.js";
 
 // GET /comment/:id => get all comments for a post
@@ -92,7 +91,41 @@ const createComment = async (req, res) => {
       ]);
   }
 
-  return res.status(201).json(data);
+  res.status(201).json(data);
+
+  // send notification if the user mentioned in the comment
+  const mentionedUsers = text.match(/@\w+/g);
+  //remove duplicate usernames
+  const uniqueMentionedUsers = [...new Set(mentionedUsers)];
+
+  if (uniqueMentionedUsers) {
+    uniqueMentionedUsers.forEach(async (username) => {
+      try {
+        const { data: mentionedUser, error: error3 } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", username.slice(1));
+
+        if (error3) return Error(error3);
+
+        if (mentionedUser) {
+          const { data: notification, error: error4 } = await supabase
+            .from("notifications")
+            .insert([
+              {
+                sender_id: userId,
+                receiver_id: mentionedUser[0].id,
+                type: "mentionComment",
+                comment_id: data.id,
+              },
+            ]);
+          console.log(error4);
+        }
+      } catch (error) {
+        return;
+      }
+    });
+  }
 };
 
 // DELETE /comment/:id => delete a comment
