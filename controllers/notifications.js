@@ -4,7 +4,7 @@ const getNotification = async (req, res) => {
   const { id: userId } = req.user;
   const { from, to } = req.params;
   // get all notifications for a user from the database
-
+  console.log(from, to);
   let { data: notifications, error } = await supabase
     .from("notifications ")
     .select(
@@ -12,8 +12,8 @@ const getNotification = async (req, res) => {
     )
     .eq("receiver_id", userId)
     .order("created_at", { ascending: true }) //! keep this ascending true (not a bug)
-    .range(from, to)
-    .limit(10);
+    .range(from, to);
+  // .limit(10);
 
   if (error) {
     console.log(error);

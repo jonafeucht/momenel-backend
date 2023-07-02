@@ -53,31 +53,52 @@ const handleRepost = async (req, res) => {
   // check if user has already reposted this post and if so, remove repost from repost table. if not, add repost to repost table using postId and userId.
   const { data, error } = await supabase
     .from("repost")
-    .select("*")
+    .select("*,post(user_id)")
     .eq("post_id", postId)
     .eq("user_id", userId);
 
   if (error) return res.status(500).json({ error: "Something went wrong" });
   if (data.length > 0) {
     // user has already reposted this post, so remove repost
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("repost")
       .delete()
       .eq("post_id", postId)
       .eq("user_id", userId);
     if (error) return res.status(500).json({ error: "Something went wrong" });
+
+    // delete notification
+    await supabase
+      .from("notifications")
+      .delete()
+      .eq("sender_id", userId)
+      .eq("receiver_id", data[0].post.user_id)
+      .eq("type", "repost");
+
     return res.status(204).send();
   } else {
     console.log("user has not reposted this post");
     // user has not reposted this post, so add repost
-    const { data, error } = await supabase.from("repost").insert([
+    const { data, error } = await supabase
+      .from("repost")
+      .insert([
+        {
+          post_id: postId,
+          user_id: userId,
+        },
+      ])
+      .select("id,post(user_id)");
+    if (error) return res.status(500).json({ error: "Something went wrong" });
+    // send notification to user who created the post
+    await supabase.from("notifications").insert([
       {
-        post_id: postId,
-        user_id: userId,
+        sender_id: userId,
+        receiver_id: data[0].post.user_id,
+        type: "repost",
+        repost_id: data[0].id,
       },
     ]);
-    if (error) return res.status(500).json({ error: "Something went wrong" });
-    // return success response
+
     return res.status(201).send();
   }
 };
