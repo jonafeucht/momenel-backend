@@ -71,12 +71,27 @@ const createComment = async (req, res) => {
   const { data, error } = await supabase
     .from("comment")
     .insert([{ post_id: postId, user_id: userId, text: text }])
-    .select("*, user:profiles(id, username, profile_url)")
+    .select("*, user:profiles(id, username, profile_url),post(user_id)")
     .single();
   if (error) {
     console.log(error);
     return res.status(400).json({ error: error.message });
   }
+
+  // send notification to the post owner
+  if (userId !== data.post.user_id) {
+    const { data: notification, error: error2 } = await supabase
+      .from("notifications")
+      .insert([
+        {
+          sender_id: userId,
+          receiver_id: data.post.user_id,
+          type: "comment",
+          comment_id: data.id,
+        },
+      ]);
+  }
+
   return res.status(201).json(data);
 };
 
@@ -100,14 +115,3 @@ const deleteComment = async (req, res) => {
 };
 
 export { createComment, getComments, deleteComment };
-
-// drop function if exists get_comment_likes;
-// create or replace function get_comment_likes(commentid int[])
-//   RETURNS TABLE (comment_id INTEGER, like_count INTEGER) AS
-// $$
-//   SELECT comment_id, COUNT(*) AS like_count
-//   FROM comment_likes
-//   WHERE comment_id = ANY(commentid)
-//   GROUP BY comment_id;
-// $$
-// LANGUAGE sql;

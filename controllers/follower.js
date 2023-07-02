@@ -4,7 +4,7 @@ import supabase from "../supabase/supabase.js";
 const handleFollow = async (req, res) => {
   const { id: user_id } = req.user;
   const { id: following_id } = req.params;
-  console.log(following_id);
+
   // check if user_id is already following follower_id
   const { data, error } = await supabase
     .from("follower")
@@ -26,15 +26,14 @@ const handleFollow = async (req, res) => {
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
-    //todo: remove the follow notification
+
+    // remove the follow notification
     const { data: data3, error: error3 } = await supabase
       .from("notifications")
       .delete()
       .eq("sender_id", user_id)
       .eq("receiver_id", following_id)
       .eq("type", "follow");
-
-    if (error3) return res.status(500).json({ error: error3.message });
 
     return res.status(204).send();
   }
