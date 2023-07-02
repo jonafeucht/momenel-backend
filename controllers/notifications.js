@@ -8,40 +8,17 @@ const getNotification = async (req, res) => {
   let { data: notifications, error } = await supabase
     .from("notifications ")
     .select(
-      "*, user:profiles!notifications_sender_id_fkey(id,username,profile_url),post(id),comment(id,post_id)"
+      "*, user:profiles!notifications_sender_id_fkey(id,username,profile_url),comment(id,post_id),post(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))"
     )
     .eq("receiver_id", userId)
-    .order("created_at", { ascending: true })
-    .range(from, to);
+    .order("created_at", { ascending: true }) //! keep this ascending true (not a bug)
+    .range(from, to)
+    .limit(10);
 
   if (error) {
     console.log(error);
     return res.status(500).json({ error: "Something went wrong" });
   }
-
-  const { data: doFollow, error: error2 } = await supabase
-    .from("follower")
-    .select("following_id")
-    .eq("follower_id", req.user.id)
-    .in(
-      "following_id",
-      notifications.map((follow) => follow.user.id)
-    );
-
-  if (error2) {
-    console.log(error2);
-    return res.status(500).json({ error: "Something went wrong" });
-  }
-
-  // map the doFollow and get the following_id. then add the isFollowed to the notifications after matching the id with following_id
-  notifications.forEach((notification) => {
-    notification.isFollowed = false;
-    doFollow.forEach((follow) => {
-      if (follow.following_id === notification.user.id) {
-        notification.isFollowed = true;
-      }
-    });
-  });
 
   res.json({ notifications });
 };
