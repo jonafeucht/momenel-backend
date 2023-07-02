@@ -8,29 +8,45 @@ const handleLike = async (req, res) => {
   // check if user has already liked this post and if so, remove like from like table. if not, add like to like table using postId and userId.
   const { data, error } = await supabase
     .from("like")
-    .select("*")
+    .select("*,post(user_id)")
     .eq("post_id", postId)
     .eq("user_id", userId);
 
   if (error) return res.status(500).json({ error: "Something went wrong" });
   if (data.length > 0) {
     // user has already liked this post, so remove like
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("like")
       .delete()
       .eq("post_id", postId)
       .eq("user_id", userId);
     if (error) return res.status(500).json({ error: "Something went wrong" });
-    return res.status(204).send();
+    res.status(204).send();
+
+    //remove like notification
+    try {
+      await supabase
+        .from("notifications")
+        .delete()
+        .eq("sender_id", userId)
+        .eq("receiver_id", data[0].post.user_id)
+        .eq("type", "post_like");
+    } catch (error) {
+      return;
+    }
   } else {
     console.log("user has not liked this post");
     // user has not liked this post, so add like
-    const { data, error } = await supabase.from("like").insert([
-      {
-        post_id: postId,
-        user_id: userId,
-      },
-    ]);
+    const { data: p, error } = await supabase
+      .from("like")
+      .insert([
+        {
+          post_id: postId,
+          user_id: userId,
+        },
+      ])
+      .select("post(user_id)")
+      .single();
     if (error) return res.status(500).json({ error: "Something went wrong" });
     // get count of likes for this post
     const { count: likesCount, error: error2 } = await supabase
@@ -40,6 +56,22 @@ const handleLike = async (req, res) => {
 
     if (error2) return res.status(500).json({ error: "Something went wrong" });
     res.json({ likes: likesCount });
+
+    try {
+      // send like notification
+      await supabase.from("notifications").insert([
+        {
+          sender_id: userId,
+          receiver_id: p.post.user_id,
+          post_id: postId,
+          type: "post_like",
+          isRead: false,
+        },
+      ]);
+      return;
+    } catch (error) {
+      return;
+    }
   }
 };
 
