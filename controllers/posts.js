@@ -8,6 +8,7 @@ import tmp from "tmp";
 import fs from "fs";
 import path from "path";
 import { fork } from "child_process";
+import e from "express";
 
 // this will get all the posts by the user
 const getUserPosts = async (req, res) => {
@@ -388,6 +389,7 @@ const deletePost = async (req, res) => {
 
   // check if the user is the owner of the post
   if (post.user_id !== userId) {
+    console.log("not allowed");
     return res
       .status(403)
       .json({ error: "You are not allowed to delete this post" });
@@ -397,12 +399,56 @@ const deletePost = async (req, res) => {
   const { data, error: deleteError } = await supabase
     .from("post")
     .delete()
+    .select("content(type,id,format)")
     .eq("id", postId);
 
   if (deleteError)
     return res.status(500).json({ error: "Something went wrong" });
 
   res.status(204).send();
+
+  // delete the content of the post
+
+  try {
+    data[0].content.map((item) => {
+      if (item.type === "video") {
+        const baseUrl = "https://video.bunnycdn.com/library/";
+        let libraryId = process.env.Video_Upload_ID;
+        const createOptions = {
+          method: "DELETE",
+          url: `${baseUrl}${libraryId}/videos/${item.id}`,
+          headers: {
+            AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+            "Content-Type": "application/json",
+          },
+        };
+        axios
+          .request(createOptions)
+          .then(function (response) {
+            console.log(response.data);
+          })
+          .catch(function (error) {
+            console.error(error);
+          });
+      } else {
+        const options = {
+          method: "DELETE",
+          url: `https://ny.storage.bunnycdn.com/momenel/posts/${item.id}.${item.format}`,
+          headers: { AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6" },
+        };
+        axios
+          .request(options)
+          .then(function (response) {
+            console.log(response.data);
+          })
+          .catch(function (error) {
+            console.error(error.message);
+          });
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 // get posts for a hashtag
