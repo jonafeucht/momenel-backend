@@ -9,7 +9,6 @@ const getHashtags = async (req, res) => {
 
 // post a hashtag
 const postHashtag = async (req, res) => {
-  console.log(req.body);
   //hashtag must start with #
   if (!req.body.hashtag.startsWith("#"))
     return res.status(400).json({ error: "Hashtag must start with #" });
@@ -35,7 +34,6 @@ const postHashtag = async (req, res) => {
 
 // user follow a hashtag
 const followHashtag = async (req, res) => {
-  console.log(req.params);
   const { data, error } = await supabase
     .from("user_hashtag")
     .select("id")

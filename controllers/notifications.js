@@ -16,7 +16,6 @@ const getNotification = async (req, res) => {
     .limit(10);
 
   if (error) {
-    console.log(error);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -25,7 +24,6 @@ const getNotification = async (req, res) => {
 
 const readAllNotifications = async (req, res) => {
   const { id: userId } = req.user;
-  console.log("read all notifications called");
   // set all notifications for a user as read in the database
   const { error } = await supabase
     .from("notifications")
@@ -33,7 +31,6 @@ const readAllNotifications = async (req, res) => {
     .eq("receiver_id", userId);
 
   if (error) {
-    console.log(error);
     return res.status(500).json({ error: "Something went wrong" });
   }
 

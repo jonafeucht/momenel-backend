@@ -21,7 +21,6 @@ const getProfileInitialData = async (req, res) => {
 
 // GET /user/editprofile
 const getEditProfileData = async (req, res) => {
-  console.log("getProfileInitialData called");
   const { id: userId } = req.user;
 
   const { data, error } = await supabase
@@ -38,7 +37,6 @@ const getEditProfileData = async (req, res) => {
 // GET /user/checkUsername/:username
 const checkUsername = async (req, res) => {
   let { username } = req.params;
-  console.log("user", username);
 
   username = username.toLowerCase();
   username = username.trim();
@@ -66,7 +64,6 @@ const checkUsername = async (req, res) => {
     .eq("username", username);
 
   if (error) return res.status(500).json({ error: error.message });
-  console.log(data);
 
   // check if data has an id that equal req.user.id. If yes, then username is available
   if (data.length > 0) {
@@ -76,7 +73,6 @@ const checkUsername = async (req, res) => {
   }
 
   if (data.length > 0) {
-    console.log(data);
     return res.status(400).json({ error: "Username is taken" });
   } else {
     return res.status(200).json({ message: "Username is available" });
@@ -118,7 +114,6 @@ const updateUsername = async (req, res) => {
   if (error?.code === "23505")
     return res.status(400).json({ error: "Username is taken" });
   if (error) return res.status(500).json({ error: error.message });
-  console.log(data);
   res.send(data);
 };
 
@@ -205,7 +200,6 @@ const updateEditProfile = async (req, res) => {
       "i"
     )
   ) {
-    console.log("site", website);
     return res.status(400).json({ error: "Website is not a valid url" });
   }
 
@@ -220,7 +214,6 @@ const updateEditProfile = async (req, res) => {
   if (error?.code === "23505")
     return res.status(400).json({ error: "Username is taken" });
   if (error) return res.status(500).json({ error: error.message });
-  console.log(profile);
   //delete old profile and update new profile picture with data.profile_url
   if (profile === undefined) {
     if (data.profile_url !== null) {
@@ -232,7 +225,6 @@ const updateEditProfile = async (req, res) => {
           },
         })
         .then(async (response) => {
-          console.log(response.status);
           // update status to published
           const { data: d2, error } = await supabase
             .from("profiles")
@@ -245,15 +237,12 @@ const updateEditProfile = async (req, res) => {
           return res.json(d2);
         })
         .catch((error) => {
-          console.log(error.message);
           return res.status(500).json({
             error: "An error occured while uploading the profile image.",
           });
         });
     }
   } else if (profile) {
-    console.log("upload profile");
-    console.log(profile);
     // delete old profile picture
     if (data.profile_url) {
       axios
@@ -264,7 +253,6 @@ const updateEditProfile = async (req, res) => {
           },
         })
         .then(async (response) => {
-          console.log(response.status);
           // update status to published
           const { data: d2, error } = await supabase
             .from("profiles")
@@ -276,7 +264,6 @@ const updateEditProfile = async (req, res) => {
           if (error) return res.status(500).json({ error: error.message });
         })
         .catch((error) => {
-          console.log(error.message);
           return res.status(500).json({
             error: "An error occured while uploading the profile image.",
           });
@@ -359,14 +346,12 @@ const updateEditProfile = async (req, res) => {
           return res.json(d2);
         })
         .catch((error) => {
-          console.log(error.message);
           // return res.status(500).json({
           //   error: "An error accured while uploading the profile image.",
           // });
         });
     }
   } else {
-    console.log("no profile");
     res.status(400).json({ error: "No profile image provided" });
   }
 };
@@ -386,7 +371,6 @@ const getDob = async (req, res) => {
 
 // updatePersonalInfo used to update date of birth only. email is updated on the frontend.
 const updatePersonalInfo = async (req, res) => {
-  console.log("updatePersonalInfo called");
   const { birthday } = req.body;
   if (!birthday)
     return res.status(400).json({ error: "Birthday cannot be empty" });
@@ -534,7 +518,6 @@ const getProfile = async (req, res) => {
     .limit(10);
 
   if (error3) {
-    console.log(error3);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -552,7 +535,6 @@ const getProfile = async (req, res) => {
   );
 
   if (hookerror) {
-    console.log(hookerror);
     return res.status(500).json({ error: "Something went wrong" });
   }
 

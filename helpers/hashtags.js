@@ -5,11 +5,10 @@ import supabase from "../supabase/supabase.js";
 // build a helper function to extract hashtags from a string
 
 function extractHashtags(str, userId, postId) {
-  console.log(str);
   const regexp = /#\w+/g;
 
   let tags = str.match(regexp);
-    
+
   if (tags) {
     // remove the # from the hashtag
     tags = tags.map((tag) => tag.slice(1));
@@ -21,13 +20,9 @@ function extractHashtags(str, userId, postId) {
         .eq("hashtag", tag);
 
       if (error) return res.status(500).json({ error: error.message });
-      console.log(data);
       if (data.length > 0) {
         let tag_id = data[0].id;
-        console.log(
-          "hashtag already exists.. creating post_hashtag relationship. This is the tag id: ",
-          tag_id
-        );
+
         // create post and hashtag relationship in the post_hashtags table
         const { data: data2, error: error2 } = await supabase
           .from("post_hashtags")
@@ -65,11 +60,5 @@ function extractHashtags(str, userId, postId) {
     });
   }
 }
-
-// console.log(
-//   extractHashtags(
-//     "Hello #world! this is a caption or comment of a post. #another_tag cool stuffs #someTagsWithCamelCase, #some_tags_with_snake_case, #nightlight #dreamteam #photography"
-//   )
-// ); // => ["#world"]
 
 export default extractHashtags;

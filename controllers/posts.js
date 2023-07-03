@@ -81,7 +81,6 @@ const getPosts = async (req, res) => {
     post.reposts = post.reposts.length;
   });
 
-  // console.log(data);
   res.json(data);
 };
 
@@ -244,16 +243,13 @@ const createPost = async (req, res) => {
             }
           )
           .then(async (response) => {
-            console.log(response.status);
             // update status to published
             await supabase
               .from("content")
               .update({ status: "published" })
               .eq("id", media.id);
           })
-          .catch((error) => {
-            console.log(error.message);
-          });
+          .catch((error) => {});
       } else if (file.mimetype.toString().startsWith("video")) {
         let width = dimensions[index]?.width || 500,
           height = dimensions[index]?.height || 500;
@@ -265,22 +261,18 @@ const createPost = async (req, res) => {
           { postfix: path.extname(originalFileName) },
           (err, tempFilePath, fd, cleanupCallback) => {
             if (err) {
-              console.log(err);
               return;
             }
             tmp.file(
               { postfix: path.extname(originalFileName) },
               (err, finalFile, fd, cleanupCallbackNew) => {
                 if (err) {
-                  console.log(err);
                   return;
                 }
 
                 fs.writeFile(tempFilePath, buffer, (err) => {
                   if (err) {
-                    console.log(err);
                   } else {
-                    console.log(tempFilePath);
                     child.send({
                       path: tempFilePath,
                       post_id: data[0].id,
@@ -298,15 +290,11 @@ const createPost = async (req, res) => {
 
         child.on("message", (message) => {
           const { statusCode, text } = message;
-          console.log(statusCode, text);
         });
       } else {
-        console.log("other");
       }
     });
-  } catch (error) {
-    console.log(error);
-  }
+  } catch (error) {}
 
   /*check if there are any items in the `media` array whose `mimetype` property
   starts with the string "video". If there are no such items, it updates the `published` property of
@@ -324,7 +312,6 @@ const updatePost = async (req, res) => {
   const { id } = req.params;
   const { caption } = req.body;
 
-  console.log({ id, caption });
   const { data, error } = await supabase
     .from("post")
     .update({ caption })
@@ -334,8 +321,6 @@ const updatePost = async (req, res) => {
     )
     .eq("id", id);
   if (error) return res.status(500).json({ error: error.message });
-
-  // console.log(data[0]);
 
   // count the likes comments and resposts of the data
   data[0].isLiked = false;
@@ -360,10 +345,6 @@ const updatePost = async (req, res) => {
   data[0].reposts = data[0].reposts.length;
 
   res.json(data);
-
-  // if (error) return res.status(500).json({ error: error.message });
-  // console.log(data);
-  // res.json(data);
 };
 
 // DELETE /posts/:id

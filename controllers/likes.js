@@ -35,7 +35,6 @@ const handleLike = async (req, res) => {
       return;
     }
   } else {
-    console.log("user has not liked this post");
     // user has not liked this post, so add like
     const { data: p, error } = await supabase
       .from("like")
@@ -91,7 +90,6 @@ const getLikes = async (req, res) => {
     .eq("post_id", postId)
     .order("created_at", { ascending: false });
 
-  // console.log(error);
   if (error) return res.status(500).json({ error: "Something went wrong" });
 
   // get if user is following the user who liked the post

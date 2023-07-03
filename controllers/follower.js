@@ -73,7 +73,6 @@ const getFollowers = async (req, res) => {
     .eq("following_id", userId)
     .order("created_at", { ascending: false });
 
-  console.log(error);
   if (error) return res.status(500).json({ error: error.message });
 
   // get if user is following the user who liked the post
@@ -115,7 +114,6 @@ const getFollowing = async (req, res) => {
     .eq("follower_id", userId)
     .order("created_at", { ascending: false });
 
-  console.log(error);
   if (error) return res.status(500).json({ error: error.message });
 
   // map the doFollow and get the following_id. then add the isFollowed to the notifications after matching the id with following_id

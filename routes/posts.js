@@ -15,7 +15,6 @@ const upload = multer({
   limits: {
     fieldNameSize: (req, file, cb) => {
       if (file.mimetype.startsWith("image")) {
-        console.log("here");
         cb(null, 10 * 1000000); // 10 MB for image files
       } else if (file.mimetype.startsWith("video")) {
         cb(null, 50 * 1000000); // 50 MB for video files
@@ -35,7 +34,7 @@ router.post(
     upload.array("content")(req, res, function (err) {
       if (err instanceof multer.MulterError) {
         // A Multer error occurred during file upload
-        console.log("Multer Error:", err.code);
+
         // Handle the error and send an appropriate response
         return res.status(400).json({
           error:
@@ -47,7 +46,7 @@ router.post(
         });
       } else if (err) {
         // An unknown error occurred
-        console.log("Unknown Error:", err);
+
         // Handle the error and send an appropriate response
         return res.status(500).json({ error: "Internal server error" });
       }

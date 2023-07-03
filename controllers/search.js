@@ -2,7 +2,6 @@ import supabase from "../supabase/supabase.js";
 
 const getSearchSuggestions = async (req, res) => {
   let { query } = req.params;
-  console.log(query);
   if (query[0] === "#") {
     // find all hashtags that start with the query
     let { data, error } = await supabase
@@ -12,7 +11,6 @@ const getSearchSuggestions = async (req, res) => {
       .limit(5);
 
     if (error) {
-      console.log(error);
       return res.status(500).json({ error: error.message });
     }
     return res.send(data);
@@ -26,7 +24,6 @@ const getSearchSuggestions = async (req, res) => {
       .limit(5);
 
     if (usernamesError) {
-      console.log(usernamesError);
       return res.status(500).json({ error: usernamesError.message });
     }
     return res.send(usernames);
@@ -39,7 +36,6 @@ const getSearchSuggestions = async (req, res) => {
       .limit(5);
 
     if (error) {
-      console.log(error);
       return res.status(500).json({ error: error.message });
     }
 
@@ -52,7 +48,6 @@ const getSearchSuggestions = async (req, res) => {
       .limit(5);
 
     if (usernamesError) {
-      console.log(usernamesError);
       return res.status(500).json({ error: usernamesError.message });
     }
 
@@ -65,7 +60,6 @@ const getSearchSuggestions = async (req, res) => {
 const searchFeed = async (req, res) => {
   const { id: userId } = req.user;
   let { from, to, hashtag } = req.params;
-  console.log(from, to, hashtag);
   let hashtagId;
   const querySQL = `id,post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`;
 
@@ -77,7 +71,6 @@ const searchFeed = async (req, res) => {
     .limit(1);
 
   if (error1) {
-    console.log(error1);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -97,7 +90,6 @@ const searchFeed = async (req, res) => {
     .limit(10);
 
   if (error3) {
-    console.log(error3);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -114,7 +106,6 @@ const searchFeed = async (req, res) => {
     .eq("hashtag_id", hashtagId);
 
   if (error2) {
-    console.log(error2);
     return res.status(500).json({ error: "Something went wrong" });
   }
 

@@ -29,9 +29,7 @@ const getOneRepost = async (req, res) => {
     reposts.isReposted = hook.reposted.includes(reposts.post.id);
 
     res.send([reposts]);
-  } catch (error) {
-    console.log(error);
-  }
+  } catch (error) {}
 };
 
 // GET /repost/:id (id of post)
@@ -50,7 +48,6 @@ const getReposts = async (req, res) => {
     .eq("post_id", postId)
     .order("created_at", { ascending: false });
 
-  // console.log(error);
   if (error) return res.status(500).json({ error: "Something went wrong" });
 
   // get if user is following the user who liked the post
@@ -111,7 +108,6 @@ const handleRepost = async (req, res) => {
 
     return res.status(204).send();
   } else {
-    console.log("user has not reposted this post");
     // user has not reposted this post, so add repost
     const { data, error } = await supabase
       .from("repost")

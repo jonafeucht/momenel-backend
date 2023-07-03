@@ -6,7 +6,7 @@ import supabase from "../supabase/supabase.js";
 
 process.on("message", (payload) => {
   const { path, userId, post_id, newFile, width, height } = payload;
-  console.log("video child");
+
   const endProcess = (endPayload) => {
     const { statusCode, text } = endPayload;
     // Remove temp file

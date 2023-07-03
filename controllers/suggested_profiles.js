@@ -26,7 +26,6 @@ const getSuggestedProfiles = async (req, res) => {
     );
 
   if (error2) {
-    console.log(error2);
     return res.status(500).json({ error: "Something went wrong" });
   }
 

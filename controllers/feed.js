@@ -13,7 +13,6 @@ const getHomeFeed = async (req, res) => {
     .eq("follower_id", userId);
 
   if (error) {
-    console.log(error);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -32,7 +31,6 @@ const getHomeFeed = async (req, res) => {
     .range(from, to);
 
   if (error2) {
-    console.log(error2);
     return res.status(500).json({ error: "Something went wrong" });
   }
   // add to posts with type post
@@ -53,7 +51,6 @@ const getHomeFeed = async (req, res) => {
     .range(from, to);
 
   if (error3) {
-    console.log(error3);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -71,7 +68,6 @@ const getHomeFeed = async (req, res) => {
   );
 
   if (hookerror) {
-    console.log(hookerror);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -138,7 +134,6 @@ const getDiscoverFeed = async (req, res) => {
     .order("created_at", { ascending: false })
     .range(from, to);
   if (error3) {
-    console.log(error3);
     return res.status(500).json({ error: "Something went wrong" });
   }
   posts = [...posts, ...data23];
@@ -149,7 +144,6 @@ const getDiscoverFeed = async (req, res) => {
     .select(`hashtag(id,hashtag)`);
 
   if (error2) {
-    console.log(error2);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -165,7 +159,6 @@ const getDiscoverFeed = async (req, res) => {
     .range(from, to);
 
   if (trendingPostsError) {
-    console.log(trendingPostsError);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -180,7 +173,6 @@ const getDiscoverFeed = async (req, res) => {
   );
 
   if (hookerror) {
-    console.log(hookerror);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -223,9 +215,6 @@ const getDiscoverFeed = async (req, res) => {
     return new Date(b.post.created_at) - new Date(a.post.created_at);
   });
 
-  // log the post ids on one line
-  console.log(posts.map((post) => post.post.id).join(", "));
-  console.log(posts.length);
   return res.json({
     posts,
     trendingHashtags: data2,

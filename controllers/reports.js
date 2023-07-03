@@ -21,17 +21,6 @@ const handleReport = async (req, res) => {
   const { id: userId } = req.user;
   const { reason } = req.body;
 
-  console.log(
-    type,
-    "of report id",
-    report_id,
-    "and item id",
-    item_id,
-    "is reported by",
-    userId,
-    "for reason",
-    reason
-  );
   if (type === "post" || type === "comment") {
     // check if report already exists for this user and post/comment
     const { data, error } = await supabase
@@ -60,10 +49,8 @@ const handleReport = async (req, res) => {
         },
       ]);
     if (reportError) {
-      console.log(reportError);
       return res.status(500).json({ error: reportError.message });
     }
-    console.log(reportData);
   } else if (type === "profile") {
     // check if report already exists for this user and post/comment
     const { data, error } = await supabase
@@ -91,10 +78,8 @@ const handleReport = async (req, res) => {
         },
       ]);
     if (reportError) {
-      console.log(reportError);
       return res.status(500).json({ error: reportError.message });
     }
-    console.log(reportData);
   } else {
     return res.status(400).json({ error: "Something went wrong." });
   }

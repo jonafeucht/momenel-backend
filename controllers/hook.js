@@ -4,7 +4,6 @@ const videoHook = async (req, res) => {
   let { VideoGuid, Status } = req.body;
   // set video status to ready if status is 3 or 4 and error if status is 5
   if (Status == 3 || Status == 4) {
-    console.log("video ready");
     // set post status to ready if all post videos are processed
     let { data, error } = await supabase
       .from("content")
@@ -50,7 +49,6 @@ const trendingHashtagsHook = async (req, res) => {
   const { data, error } = await supabase.rpc("get_top_hashtags");
 
   if (error) {
-    console.log(error);
     return res.status(500).json({ error: "Something went wrong" });
   }
   // delete all the hashtags from treding_hashtags and add the hashtag_id to the trending_hashtags table from data2
@@ -60,7 +58,6 @@ const trendingHashtagsHook = async (req, res) => {
     .neq("hashtag_id", 0);
 
   if (error2) {
-    console.log(error2);
     return res.status(500).json({ error: "Something went wrong" });
   }
 
@@ -69,7 +66,6 @@ const trendingHashtagsHook = async (req, res) => {
     .insert(data.map((hashtag) => ({ hashtag_id: hashtag.hashtag_id })));
 
   if (error3) {
-    console.log(error3);
     return res.status(500).json({ error: "Something went wrong" });
   }
 

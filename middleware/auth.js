@@ -7,7 +7,7 @@ const verify = async (req, res, next) => {
     return res.status(401).json({ error: "Unauthorized" });
   } else {
     const token = req.headers.authorization.split(" ")[1]; // Get token from Authorization header
-    //   console.log(token);
+
     const {
       data: { user },
       error,
@@ -16,7 +16,6 @@ const verify = async (req, res, next) => {
     req.user = user;
   }
 
-  //   console.log(user);
   next();
 };
 
