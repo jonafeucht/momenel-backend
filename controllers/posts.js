@@ -99,7 +99,7 @@ const getOnePost = async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
 
   // get ids
-  const { data: hook, error: hookerror } = await supabase.rpc(
+  let { data: hook, error: hookerror } = await supabase.rpc(
     "check_likes_reposts",
     { user_id: userId, post_ids: [id] }
   );
@@ -107,8 +107,8 @@ const getOnePost = async (req, res) => {
   if (hookerror) return res.status(500).json({ error: hookerror.message });
 
   // add isLiked and isReposted to posts and set them true or false  hook={ liked: [ 100, 91 ], reposted: [ 99 ] }
-  data.isLiked = hook.liked.includes(id);
-  data.isReposted = hook.reposted.includes(id);
+  data.isLiked = hook.liked.includes(data.id);
+  data.isReposted = hook.reposted.includes(data.id);
 
   res.json([data]);
 };

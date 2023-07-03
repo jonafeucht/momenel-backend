@@ -10,7 +10,6 @@ const getBlockedUsers = async (req, res) => {
     )
     .eq("user_id", userId);
 
-  console.log(error);
   if (error) return res.status(500).json({ error: error.message });
 
   // add isBlocked to true for each data

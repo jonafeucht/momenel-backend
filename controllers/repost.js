@@ -1,5 +1,39 @@
 import supabase from "../supabase/supabase.js";
 
+const getOneRepost = async (req, res) => {
+  const { id } = req.params;
+  const { id: userId } = req.user;
+
+  try {
+    // get all reposts from the followed users
+    let { data: reposts, error: error3 } = await supabase
+      .from("repost")
+      .select(
+        `id,created_at,repostedBy:profiles(id,username),post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`
+      )
+      .eq("id", id)
+      .single();
+
+    if (error3) return res.status(500).json({ error: "Something went wrong" });
+
+    const { data: hook, error: hookerror } = await supabase.rpc(
+      "check_likes_reposts",
+      { user_id: userId, post_ids: [reposts.post.id] }
+    );
+
+    if (hookerror)
+      return res.status(500).json({ error: "Something went wrong" });
+
+    // add isLiked and isReposted to posts and set them true or false  hook={ liked: [ 100, 91 ], reposted: [ 99 ] }
+    reposts.isLiked = hook.liked.includes(reposts.post.id);
+    reposts.isReposted = hook.reposted.includes(reposts.post.id);
+
+    res.send([reposts]);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 // GET /repost/:id (id of post)
 const getReposts = async (req, res) => {
   const { id: postId } = req.params;
@@ -132,4 +166,4 @@ const deleteRepost = async (req, res) => {
   res.status(204).send();
 };
 
-export { getReposts, handleRepost, deleteRepost };
+export { getReposts, handleRepost, deleteRepost, getOneRepost };

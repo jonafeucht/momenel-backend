@@ -31,7 +31,7 @@ const resetPassword = async (req, res) => {
     } = await supabase.auth.getUser(token);
     if (error)
       return res.status(401).json({ error: "oops, something went wrong." });
-    console.log(user.id);
+
     const { error2 } = await supabase.auth.admin.updateUserById(user.id, {
       password: newPassword,
     });

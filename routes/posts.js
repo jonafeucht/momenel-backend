@@ -25,12 +25,6 @@ const upload = multer({
     },
   },
 }); //multer options
-// const upload = multer({
-//   limits: {
-//     fieldSize: 50 * 1000000,
-//     files: 10,
-//   },
-// }); //multer options
 
 router.get("/user", getUserPosts);
 router.get("/", getPosts);

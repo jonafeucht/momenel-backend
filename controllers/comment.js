@@ -12,7 +12,6 @@ const getComments = async (req, res) => {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.log(error);
     return res.status(400).json({ error: error.message });
   }
 
@@ -26,7 +25,7 @@ const getComments = async (req, res) => {
   if (error2) return res.status(400).json({ error: error2.message });
 
   // map the likesCount and get the like_count. then add the like_count to the data after matching the id with comment_id
-  console.log(req.user.id);
+  req.user.id;
   data.forEach((comment) => {
     comment.likes = 0;
     likesCount.forEach((like) => {
@@ -73,7 +72,6 @@ const createComment = async (req, res) => {
     .select("*, user:profiles(id, username, profile_url),post(user_id)")
     .single();
   if (error) {
-    console.log(error);
     return res.status(400).json({ error: error.message });
   }
 
@@ -119,7 +117,7 @@ const createComment = async (req, res) => {
                 comment_id: data.id,
               },
             ]);
-          console.log(error4);
+          error4;
         }
       } catch (error) {
         return;
@@ -140,7 +138,7 @@ const deleteComment = async (req, res) => {
     .eq("id", commentId)
     .eq("user_id", userId);
   if (error) {
-    console.log(error);
+    error;
     return res.status(400).json({ error: error.message });
   }
 
