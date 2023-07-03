@@ -88,37 +88,29 @@ const getPosts = async (req, res) => {
 // GET /posts/:id
 const getOnePost = async (req, res) => {
   const { id } = req.params;
+  const { id: userId } = req.user;
   let { data, error } = await supabase
     .from("post")
     .select(
-      `*, user:profiles(id, name, username, profile_url), likes: like(user_id), comments: comment(user_id), reposts: repost(user_id), content(*)`
+      `id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format)`
     )
-    .eq("id", id);
+    .eq("id", id)
+    .single();
   if (error) return res.status(500).json({ error: error.message });
 
-  // count the likes comments and resposts of the data
-  data[0].isLiked = false;
-  data[0].isReposted = false;
+  // get ids
+  const { data: hook, error: hookerror } = await supabase.rpc(
+    "check_likes_reposts",
+    { user_id: userId, post_ids: [id] }
+  );
 
-  // check if the user has liked the post
-  data[0].likes.forEach((like) => {
-    if (like.user_id === req.user.id) {
-      data[0].isLiked = true;
-    }
-  });
+  if (hookerror) return res.status(500).json({ error: hookerror.message });
 
-  // check if the user has reposted the post
-  data[0].reposts.forEach((repost) => {
-    if (repost.user_id === req.user.id) {
-      data[0].isReposted = true;
-    }
-  });
+  // add isLiked and isReposted to posts and set them true or false  hook={ liked: [ 100, 91 ], reposted: [ 99 ] }
+  data.isLiked = hook.liked.includes(id);
+  data.isReposted = hook.reposted.includes(id);
 
-  data[0].likes = data[0].likes.length;
-  data[0].comments = data[0].comments.length;
-  data[0].reposts = data[0].reposts.length;
-
-  res.json(data);
+  res.json([data]);
 };
 
 // POST /posts
