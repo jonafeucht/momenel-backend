@@ -18,7 +18,7 @@ const handleFollow = async (req, res) => {
   // if user is already following the follower_id
   if (data.length > 0) {
     // unfollow the user
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("follower")
       .delete()
       .eq("follower_id", user_id)
@@ -28,7 +28,7 @@ const handleFollow = async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
 
     // remove the follow notification
-    const { data: data3, error: error3 } = await supabase
+    await supabase
       .from("notifications")
       .delete()
       .eq("sender_id", user_id)
@@ -45,19 +45,15 @@ const handleFollow = async (req, res) => {
     .insert([{ follower_id: user_id, following_id: following_id }]);
   if (error2) return res.status(500).json({ error: error2.message });
 
-  //todo: send the follow notification
-  const { data: data3, error: error3 } = await supabase
-    .from("notifications")
-    .insert([
-      {
-        sender_id: user_id,
-        receiver_id: following_id,
-        type: "follow",
-        isRead: false,
-      },
-    ]);
-
-  // if (error3) return res.status(500).json({ error: error3.message });
+  // send the follow notification
+  await supabase.from("notifications").insert([
+    {
+      sender_id: user_id,
+      receiver_id: following_id,
+      type: "follow",
+      isRead: false,
+    },
+  ]);
 
   return res.status(201).send();
 };

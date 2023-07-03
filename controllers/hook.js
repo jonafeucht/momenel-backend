@@ -8,7 +8,7 @@ const videoHook = async (req, res) => {
     let { data, error } = await supabase
       .from("content")
       .update({ status: "published" })
-      .select("post_id")
+      .select("post_id,post(user_id)")
       .eq("id", VideoGuid)
       .single();
 
@@ -32,6 +32,19 @@ const videoHook = async (req, res) => {
         .update({ published: true })
         .eq("id", data.post_id);
       if (postError) return;
+
+      // send notification to post owner after checking if notification doesn't already exist
+      if (Status == 3) {
+        await supabase.from("notifications").insert([
+          {
+            sender_id: data.post.user_id,
+            receiver_id: data.post.user_id,
+            type: "system",
+            post_id: data.post_id,
+            system_message: "post has been published",
+          },
+        ]);
+      }
     }
   } else if (Status == 5) {
     await supabase

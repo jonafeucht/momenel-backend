@@ -145,7 +145,21 @@ const createPost = async (req, res) => {
   data[0].comments = data[0].comments.length;
   data[0].reposts = data[0].reposts.length;
 
-  if (!media || media.length === 0) return res.status(201).json(data);
+  if (!media || media.length === 0) {
+    console.log("no media");
+    // send notification to post owner
+    await supabase.from("notifications").insert([
+      {
+        sender_id: userId,
+        receiver_id: data[0].user_id,
+        type: "system",
+        post_id: data[0].id,
+        system_message: "post has been published",
+      },
+    ]);
+
+    return res.status(201).json(data);
+  }
 
   // else if there is media files then send a resonse before creating the media
   res.status(201).json(data);
@@ -304,6 +318,17 @@ const createPost = async (req, res) => {
       .from("post")
       .update({ published: true })
       .eq("id", data[0].id);
+
+    // send notification to post owner
+    await supabase.from("notifications").insert([
+      {
+        sender_id: userId,
+        receiver_id: data[0].user_id,
+        type: "system",
+        post_id: data[0].id,
+        system_message: "post has been published",
+      },
+    ]);
   }
 };
 
