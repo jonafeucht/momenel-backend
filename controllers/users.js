@@ -141,7 +141,7 @@ const updateName = async (req, res) => {
 // POST /user/updateEditProfile
 const updateEditProfile = async (req, res) => {
   const { id: userId } = req.user;
-  let { username, name, bio, website, profile_url, deletePofile } = req.body;
+  let { username, name, bio, website, profile_url, deleteProfile } = req.body;
   const { file: profile } = req;
 
   // update username, name, bio, website in lowercase and trim spaces
@@ -215,144 +215,148 @@ const updateEditProfile = async (req, res) => {
     return res.status(400).json({ error: "Username is taken" });
   if (error) return res.status(500).json({ error: error.message });
   //delete old profile and update new profile picture with data.profile_url
-  if (profile === undefined) {
-    if (data.profile_url !== null) {
-      axios
-        .delete(`${process.env.Profile_Upload_Url}/${data.profile_url}`, {
-          headers: {
-            AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
-            "Content-Type": "application/octet-stream",
-          },
-        })
-        .then(async (response) => {
-          // update status to published
-          const { data: d2, error } = await supabase
-            .from("profiles")
-            .update({ profile_url: null, blurhash: null })
-            .eq("id", userId)
-            .select("username, name, bio, website, profile_url,blurhash")
-            .single();
+  try {
+    if (profile === undefined && deleteProfile === "true") {
+      if (data.profile_url !== null) {
+        axios
+          .delete(`${process.env.Profile_Upload_Url}/${data.profile_url}`, {
+            headers: {
+              AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+              "Content-Type": "application/octet-stream",
+            },
+          })
+          .then(async (response) => {
+            // update status to published
+            const { data: d2, error } = await supabase
+              .from("profiles")
+              .update({ profile_url: null, blurhash: null })
+              .eq("id", userId)
+              .select("username, name, bio, website, profile_url,blurhash")
+              .single();
 
-          if (error) return res.status(500).json({ error: error.message });
-          return res.json(d2);
-        })
-        .catch((error) => {
-          return res.status(500).json({
-            error: "An error occured while uploading the profile image.",
+            if (error) return res.status(500).json({ error: error.message });
+            return res.json(d2);
+          })
+          .catch((error) => {
+            return res.status(500).json({
+              error: "An error occured while uploading the profile image.",
+            });
           });
-        });
-    }
-  } else if (profile) {
-    // delete old profile picture
-    if (data.profile_url) {
-      axios
-        .delete(`${process.env.Profile_Upload_Url}/${data.profile_url}`, {
-          headers: {
-            AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
-            "Content-Type": "application/octet-stream",
-          },
-        })
-        .then(async (response) => {
-          // update status to published
-          const { data: d2, error } = await supabase
-            .from("profiles")
-            .update({ profile_url: null, blurhash: null })
-            .eq("id", userId)
-            .select("username, name, bio, website, profile_url,blurhash")
-            .single();
+      }
+    } else if (profile) {
+      // delete old profile picture
+      if (data.profile_url) {
+        axios
+          .delete(`${process.env.Profile_Upload_Url}/${data.profile_url}`, {
+            headers: {
+              AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+              "Content-Type": "application/octet-stream",
+            },
+          })
+          .then(async (response) => {
+            // update status to published
+            const { data: d2, error } = await supabase
+              .from("profiles")
+              .update({ profile_url: null, blurhash: null })
+              .eq("id", userId)
+              .select("username, name, bio, website, profile_url,blurhash")
+              .single();
 
-          if (error) return res.status(500).json({ error: error.message });
-        })
-        .catch((error) => {
-          return res.status(500).json({
-            error: "An error occured while uploading the profile image.",
+            if (error) return res.status(500).json({ error: error.message });
+          })
+          .catch((error) => {
+            return res.status(500).json({
+              error: "An error occured while uploading the profile image.",
+            });
           });
-        });
-    }
-
-    // upload new profile picture
-    if (profile.mimetype.toString().startsWith("image")) {
-      let width,
-        height = 1000;
-      let buffer = profile.buffer;
-      let format = profile.mimetype.toString().split("/")[1];
-
-      // if file is heic convert it to jpeg
-      if (
-        profile.mimetype.toString() === "image/heic" ||
-        profile.mimetype.toString() === "image/heif"
-      ) {
-        buffer = await convert({
-          buffer,
-          format: "JPEG",
-        });
-        format = "jpeg";
       }
 
-      // if the file is not a gif then compress it
-      if (profile.mimetype.toString() !== "image/gif") {
-        await sharp(buffer)
-          .resize(width, height, { fit: "cover" })
-          .jpeg({ mozjpeg: true, quality: 100, force: false })
-          .png({ quality: 100, force: false })
-          .toBuffer({ resolveWithObject: true })
-          .then(({ data, info }) => {
-            buffer = data;
-            format = info.format;
+      // upload new profile picture
+      if (profile.mimetype.toString().startsWith("image")) {
+        let width,
+          height = 1000;
+        let buffer = profile.buffer;
+        let format = profile.mimetype.toString().split("/")[1];
+
+        // if file is heic convert it to jpeg
+        if (
+          profile.mimetype.toString() === "image/heic" ||
+          profile.mimetype.toString() === "image/heif"
+        ) {
+          buffer = await convert({
+            buffer,
+            format: "JPEG",
+          });
+          format = "jpeg";
+        }
+
+        // if the file is not a gif then compress it
+        if (profile.mimetype.toString() !== "image/gif") {
+          await sharp(buffer)
+            .resize(width, height, { fit: "cover" })
+            .jpeg({ mozjpeg: true, quality: 100, force: false })
+            .png({ quality: 100, force: false })
+            .toBuffer({ resolveWithObject: true })
+            .then(({ data, info }) => {
+              buffer = data;
+              format = info.format;
+            })
+            .catch((err) => {});
+        } else if (profile.mimetype.toString() === "image/gif") {
+          await sharp(buffer, { animated: true })
+            .resize(200)
+            .toBuffer({ resolveWithObject: true })
+            .then(({ data, info }) => {
+              buffer = data;
+              format = info.format;
+            })
+            .catch((err) => {});
+        }
+
+        // create blurhash
+        const { data: sharpBuffer, info } = await sharp(buffer)
+          .ensureAlpha()
+          .raw()
+          .toBuffer({
+            resolveWithObject: true,
+          });
+
+        const blurhash = encode(sharpBuffer, info.width, info.height, 3, 3);
+
+        // create a uuid
+        const uuid = randomUUID();
+
+        // upload image to supabase storage
+        axios
+          .put(`${process.env.Profile_Upload_Url}/${uuid}.${format}`, buffer, {
+            headers: {
+              AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+              "Content-Type": "application/octet-stream",
+            },
           })
-          .catch((err) => {});
-      } else if (profile.mimetype.toString() === "image/gif") {
-        await sharp(buffer, { animated: true })
-          .resize(200)
-          .toBuffer({ resolveWithObject: true })
-          .then(({ data, info }) => {
-            buffer = data;
-            format = info.format;
+          .then(async (response) => {
+            // update status to published
+            const { data: d2, error } = await supabase
+              .from("profiles")
+              .update({ profile_url: `${uuid}.${format}`, blurhash })
+              .eq("id", userId)
+              .select("username, name, bio, website, profile_url,blurhash")
+              .single();
+
+            if (error) return res.status(500).json({ error: error.message });
+            return res.json(d2);
           })
-          .catch((err) => {});
+          .catch((error) => {
+            // return res.status(500).json({
+            //   error: "An error accured while uploading the profile image.",
+            // });
+          });
       }
-
-      // create blurhash
-      const { data: sharpBuffer, info } = await sharp(buffer)
-        .ensureAlpha()
-        .raw()
-        .toBuffer({
-          resolveWithObject: true,
-        });
-
-      const blurhash = encode(sharpBuffer, info.width, info.height, 3, 3);
-
-      // create a uuid
-      const uuid = randomUUID();
-
-      // upload image to supabase storage
-      axios
-        .put(`${process.env.Profile_Upload_Url}/${uuid}.${format}`, buffer, {
-          headers: {
-            AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
-            "Content-Type": "application/octet-stream",
-          },
-        })
-        .then(async (response) => {
-          // update status to published
-          const { data: d2, error } = await supabase
-            .from("profiles")
-            .update({ profile_url: `${uuid}.${format}`, blurhash })
-            .eq("id", userId)
-            .select("username, name, bio, website, profile_url,blurhash")
-            .single();
-
-          if (error) return res.status(500).json({ error: error.message });
-          return res.json(d2);
-        })
-        .catch((error) => {
-          // return res.status(500).json({
-          //   error: "An error accured while uploading the profile image.",
-          // });
-        });
+    } else {
+      res.status(200).json(data);
     }
-  } else {
-    res.status(400).json({ error: "No profile image provided" });
+  } catch (error) {
+    console.log(error);
   }
 };
 
