@@ -1,6 +1,7 @@
 import express from "express";
 import {
   checkUsername,
+  deleteAccount,
   getDob,
   getEditProfileData,
   getProfile,
@@ -24,10 +25,8 @@ router.post("/hasOnboarded", updateHasOnboarded);
 router.get("/editprofile", getEditProfileData);
 router.post("/editprofile", upload.single("profile"), updateEditProfile);
 router.get("/profile/:username/:from/:to", getProfile);
-//todo: get user followers
-//todo: get user following only if the user id is same as the logged in user
 router.get("/dob", getDob);
 router.post("/updatePersonalInfo", updatePersonalInfo);
-//todo: delete user account
+router.delete("/delete", deleteAccount);
 
 export default router;

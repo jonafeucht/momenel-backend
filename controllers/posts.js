@@ -389,7 +389,6 @@ const deletePost = async (req, res) => {
 
   // check if the user is the owner of the post
   if (post.user_id !== userId) {
-    console.log("not allowed");
     return res
       .status(403)
       .json({ error: "You are not allowed to delete this post" });
@@ -408,7 +407,6 @@ const deletePost = async (req, res) => {
   res.status(204).send();
 
   // delete the content of the post
-
   try {
     data[0].content.map((item) => {
       if (item.type === "video") {

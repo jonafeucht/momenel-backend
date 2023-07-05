@@ -643,6 +643,85 @@ const getProfile = async (req, res) => {
   res.send(data);
 };
 
+// delete user account and all content
+const deleteAccount = async (req, res) => {
+  let userId = req.user.id;
+
+  // delete all posts by the user
+  const { data: posts, error: postsError } = await supabase
+    .from("post")
+    .select("id,content(type,id,format)")
+    .eq("user_id", userId);
+
+  if (postsError) return res.status(500).json({ error: postsError.message });
+
+  if (posts.length > 0) {
+    posts.map(async (post) => {
+      // if post has content
+      if (post.content.length > 0) {
+        post.content.map(async (item) => {
+          if (item.type === "video") {
+            const baseUrl = "https://video.bunnycdn.com/library/";
+            let libraryId = process.env.Video_Upload_ID;
+            const createOptions = {
+              method: "DELETE",
+              url: `${baseUrl}${libraryId}/videos/${item.id}`,
+              headers: {
+                AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+                "Content-Type": "application/json",
+              },
+            };
+            try {
+              axios
+                .request(createOptions)
+                .then(async function (response) {
+                  // delete the post
+                  await supabase
+                    .from("post")
+                    .delete()
+                    .select("content(type,id,format)")
+                    .eq("id", post.id);
+                })
+                .catch(function (error) {
+                  return res.status(500).json({ error: error.message });
+                });
+            } catch (error) {}
+          } else if (item.type === "image") {
+            const options = {
+              method: "DELETE",
+              url: `https://ny.storage.bunnycdn.com/momenel/posts/${item.id}.${item.format}`,
+              headers: {
+                AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+              },
+            };
+
+            axios
+              .request(options)
+              .then(async function (response) {
+                await supabase
+                  .from("post")
+                  .delete()
+                  .select("content(type,id,format)")
+                  .eq("id", post.id);
+              })
+              .catch(function (error) {
+                return res.status(500).json({ error: error.message });
+              });
+          }
+        });
+      }
+    });
+  }
+
+  // delete user profile
+
+  const { error } = await supabase.auth.admin.deleteUser(req.user.id);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.send("Account deleted successfully");
+};
+
 export {
   getProfileInitialData,
   updatePersonalInfo,
@@ -654,4 +733,5 @@ export {
   updateName,
   updateHasOnboarded,
   getProfile,
+  deleteAccount,
 };
