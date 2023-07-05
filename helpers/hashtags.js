@@ -9,6 +9,9 @@ function extractHashtags(str, userId, postId) {
 
   let tags = str.match(regexp);
 
+  // remove dublicates
+  tags = [...new Set(tags)];
+
   if (tags) {
     // remove the # from the hashtag
     tags = tags.map((tag) => tag.slice(1));
