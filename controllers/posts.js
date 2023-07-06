@@ -246,7 +246,7 @@ const createPost = async (req, res) => {
 
         if (error) return;
 
-        axios
+        await axios
           .put(
             `${process.env.Image_Upload_Url}/${media.id}.${format}`,
             buffer,
