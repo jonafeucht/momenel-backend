@@ -1,6 +1,6 @@
 import supabase from "../supabase/supabase.js";
 
-//todo: get home feed for a user => posts from users they follow and their own posts
+//get home feed for a user => posts from users they follow and their own posts
 const getHomeFeed = async (req, res) => {
   const { id: userId } = req.user;
   let { from, to, ids } = req.params;
@@ -218,7 +218,7 @@ const getDiscoverFeed = async (req, res) => {
   return res.json({
     posts,
     trendingHashtags: data2,
-    followingHashtags: data.splice(5, data.length - 5),
+    followingHashtags: data,
   });
 };
 
