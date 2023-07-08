@@ -16,6 +16,20 @@ const getHomeFeed = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 
+  // get all blocked users
+  const { data: blockedUsers, error: error4 } = await supabase
+    .from("blocked")
+    .select(`blocked_id`)
+    .eq("user_id", userId);
+
+  if (error4) {
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  // get all blocked ids in format (id1,id2,id3)
+  const blockedIds = blockedUsers.map((b) => b.blocked_id);
+  const blockedIdsString = `(${blockedIds.join(",")})`;
+
   // get all posts from users the user follows
   const { data: followingPosts, error: error2 } = await supabase
     .from("post")
@@ -27,6 +41,7 @@ const getHomeFeed = async (req, res) => {
       "user_id",
       data.map((f) => f.following_id)
     )
+    .not("user_id", "in", blockedIdsString)
     .order("created_at", { ascending: false })
     .range(from, to);
 
@@ -47,7 +62,8 @@ const getHomeFeed = async (req, res) => {
       "user_id",
       data.map((f) => f.following_id)
     )
-    .order("created_at", { ascending: false })
+    .not("post.user_id", "in", blockedIdsString)
+    .not("user_id", "in", blockedIdsString)
     .range(from, to);
 
   if (error3) {
