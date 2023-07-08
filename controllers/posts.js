@@ -147,7 +147,6 @@ const createPost = async (req, res) => {
   data[0].reposts = data[0].reposts.length;
 
   if (!media || media.length === 0) {
-    console.log("no media");
     // send notification to post owner
     await supabase.from("notifications").insert([
       {
@@ -284,18 +283,65 @@ const createPost = async (req, res) => {
                 if (err) {
                   return;
                 }
-
                 fs.writeFile(tempFilePath, buffer, (err) => {
                   if (err) {
                   } else {
-                    child.send({
-                      path: tempFilePath,
-                      post_id: data[0].id,
-                      userId,
-                      newFile: finalFile,
-                      width,
-                      height,
-                    });
+                    const baseUrl = "https://video.bunnycdn.com/library/";
+                    const createOptions = {
+                      method: "POST",
+                      url: `${baseUrl}${process.env.Video_Upload_ID}/videos`,
+                      headers: {
+                        AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+                        "Content-Type": "application/json",
+                      },
+                      data: { title: `${userId}.${"mp4"}` },
+                    };
+                    axios
+                      .request(createOptions)
+                      .then(async (response) => {
+                        // create the media with type video
+                        const { data: media, error } = await supabase
+                          .from("content")
+                          .insert([
+                            {
+                              id: response.data.guid,
+                              post_id: data[0].id,
+                              type: "video",
+                              width,
+                              height,
+                            },
+                          ])
+                          .select("id")
+                          .single();
+                        if (error) {
+                          return;
+                        }
+                        // upload video
+                        child.send({
+                          path: tempFilePath,
+                          post_id: data[0].id,
+                          userId,
+                          newFile: finalFile,
+                          width,
+                          height,
+                          guid: response.data.guid,
+                        });
+                      })
+                      .catch(async (error) => {
+                        await supabase
+                          .from("content")
+                          .insert([
+                            {
+                              status: "error",
+                              post_id: data[0].id,
+                              type: "video",
+                              width,
+                              height,
+                            },
+                          ])
+                          .select("id")
+                          .single();
+                      });
                   }
                 });
               }
@@ -304,7 +350,11 @@ const createPost = async (req, res) => {
         );
 
         child.on("message", (message) => {
-          const { statusCode, text } = message;
+          const { statusCode, text, post_id } = message;
+          if (statusCode !== 200) {
+            //todo: error notification
+            console.log(post_id);
+          }
         });
       } else {
       }
@@ -422,12 +472,8 @@ const deletePost = async (req, res) => {
         };
         axios
           .request(createOptions)
-          .then(function (response) {
-            console.log(response.data);
-          })
-          .catch(function (error) {
-            console.error(error);
-          });
+          .then(function (response) {})
+          .catch(function (error) {});
       } else {
         const options = {
           method: "DELETE",
@@ -436,17 +482,11 @@ const deletePost = async (req, res) => {
         };
         axios
           .request(options)
-          .then(function (response) {
-            console.log(response.data);
-          })
-          .catch(function (error) {
-            console.error(error.message);
-          });
+          .then(function (response) {})
+          .catch(function (error) {});
       }
     });
-  } catch (error) {
-    console.log(error);
-  }
+  } catch (error) {}
 };
 
 // get posts for a hashtag

@@ -5,7 +5,7 @@ import axios from "axios";
 import supabase from "../supabase/supabase.js";
 
 process.on("message", (payload) => {
-  const { path, userId, post_id, newFile, width, height } = payload;
+  const { path, userId, post_id, newFile, width, height, guid } = payload;
 
   const endProcess = (endPayload) => {
     const { statusCode, text } = endPayload;
@@ -13,11 +13,11 @@ process.on("message", (payload) => {
 
     fs.unlink(path, (err) => {
       if (err) {
-        process.send({ statusCode: 500, text: err.message });
+        process.send({ statusCode: 500, text: err.message, post_id: post_id });
       }
     });
     // Format response so it fits the api response
-    process.send({ statusCode, text });
+    process.send({ statusCode, text, post_id: post_id });
     // End process
     process.exit();
   };
@@ -32,76 +32,28 @@ process.on("message", (payload) => {
     .on("end", async (e) => {
       // covert newFile to base64
       fs.readFile(newFile, function (err, data) {
+        //* upload video
         const baseUrl = "https://video.bunnycdn.com/library/";
-        let libraryId = process.env.Video_Upload_ID;
-        const createOptions = {
-          method: "POST",
-          url: `${baseUrl}${libraryId}/videos`,
-          headers: {
-            AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
-            "Content-Type": "application/json",
-          },
-          data: { title: `${userId}.${"mp4"}` },
-        };
         axios
-          .request(createOptions)
-          .then(async (response) => {
-            // create the media with type video
-            const { data: media, error } = await supabase
-              .from("content")
-              .insert([
-                {
-                  id: response.data.guid,
-                  post_id: post_id,
-                  type: "video",
-                  width,
-                  height,
-                },
-              ])
-              .select("id")
-              .single();
-            if (error) return;
-            //* upload video
-            axios
-              .put(
-                `${baseUrl}${libraryId}/videos/${response.data.guid}`,
-                data,
-                {
-                  headers: {
-                    AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
-                    "Content-Type": "application/octet-stream",
-                  },
-                }
-              )
-              .then((response) => {
-                endProcess({ statusCode: 200, text: "Success" });
-              })
-              .catch(async (error) => {
-                //todo: send error notification
-                //todo: delete video from bunnycdn
-                await supabase
-                  .from("content")
-                  .update({ status: "error" })
-                  .eq("id", response.data.guid);
-                endProcess({ statusCode: 500, text: "upload error" });
-              });
+          .put(
+            `${baseUrl}${process.env.Video_Upload_ID}/videos/${guid}`,
+            data,
+            {
+              headers: {
+                AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+                "Content-Type": "application/octet-stream",
+              },
+            }
+          )
+          .then((response) => {
+            endProcess({ statusCode: 200, text: "Success" });
           })
           .catch(async (error) => {
             await supabase
               .from("content")
-              .insert([
-                {
-                  status: "error",
-                  post_id: post_id,
-                  type: "video",
-                  width,
-                  height,
-                },
-              ])
-              .select("id")
-              .single();
-
-            endProcess({ statusCode: 500, text: "uplaod error 2" });
+              .update({ status: "error" })
+              .eq("id", guid);
+            endProcess({ statusCode: 500, text: "upload error" });
           });
       });
     })
@@ -109,4 +61,10 @@ process.on("message", (payload) => {
       endProcess({ statusCode: 500, text: err.message });
     })
     .saveToFile(newFile);
+});
+
+process.on("uncaughtException", (err) => {
+  console.log("uncaughtException");
+  console.log(err);
+  process.exit(1);
 });
