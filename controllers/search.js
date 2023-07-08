@@ -124,6 +124,41 @@ const searchFeed = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 
+  // get all posts ids in a new array based on the type
+  const postIds = data23.map((post) =>
+    post.type === "post" ? post.id : post.post.id
+  );
+
+  const { data: hook, error: hookerror } = await supabase.rpc(
+    "check_likes_reposts",
+    { user_id: userId, post_ids: postIds }
+  );
+
+  if (hookerror) {
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  // add isLiked and isReposted to posts and set them true or false  hook={ liked: [ 100, 91 ], reposted: [ 99 ] }
+  data23 = data23.map((post) => {
+    const { liked, reposted } = hook;
+    let updatedPost = post;
+    let id = post.type === "post" ? post.id : post.post.id;
+
+    if (liked.includes(id)) {
+      updatedPost = { ...updatedPost, isLiked: true };
+    } else {
+      updatedPost = { ...updatedPost, isLiked: false };
+    }
+
+    if (reposted.includes(id)) {
+      updatedPost = { ...updatedPost, isReposted: true };
+    } else {
+      updatedPost = { ...updatedPost, isReposted: false };
+    }
+
+    return updatedPost;
+  });
+
   let resData = {
     hashtagId: hashtagId,
     isFollowing: data2.length > 0,
