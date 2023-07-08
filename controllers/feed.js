@@ -16,6 +16,9 @@ const getHomeFeed = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 
+  // add userId to data array at end in format  { following_id: 'e0d08cf8-98de-4d53-a92b-7bb857d3f9db' },
+  data = [...data, { following_id: userId }];
+
   // get all blocked users
   const { data: blockedUsers, error: error4 } = await supabase
     .from("blocked")
