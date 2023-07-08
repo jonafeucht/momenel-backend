@@ -123,6 +123,22 @@ const getDiscoverFeed = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 
+  // get all blocked users
+  const { data: blockedUsers, error: error4 } = await supabase
+    .from("blocked")
+    .select(`blocked_id`)
+    .eq("user_id", userId);
+
+  if (error4) {
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+
+  // get all blocked ids in format (id1,id2,id3)
+  const blockedIds = blockedUsers.map((b) => b.blocked_id);
+  // also add userId to it
+  blockedIds.push(userId);
+  const blockedIdsString = `(${blockedIds.join(",")})`;
+
   const { data: data23, error: error3 } = await supabase
     .from("post_hashtags")
     .select(querySQL)
@@ -131,6 +147,7 @@ const getDiscoverFeed = async (req, res) => {
       "hashtag_id",
       data.map((h) => h.hashtag.id)
     )
+    .not("post.user_id", "in", blockedIdsString)
     .order("created_at", { ascending: false })
     .range(from, to);
   if (error3) {
@@ -155,6 +172,7 @@ const getDiscoverFeed = async (req, res) => {
       "hashtag_id",
       data2.map((h) => h.hashtag.id)
     )
+    .not("post.user_id", "in", blockedIdsString)
     .order("created_at", { ascending: false })
     .range(from, to);
 
