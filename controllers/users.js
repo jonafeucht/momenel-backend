@@ -537,9 +537,11 @@ const getProfile = async (req, res) => {
 
   const { data: hook, error: hookerror } = await supabase.rpc(
     "check_likes_reposts",
-    { user_id: userId, post_ids: postIds }
+    {
+      user_id: req.user.id,
+      post_ids: postIds,
+    }
   );
-
   if (hookerror) {
     return res.status(500).json({ error: "Something went wrong" });
   }

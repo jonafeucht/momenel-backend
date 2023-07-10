@@ -9,6 +9,4 @@ const router = express.Router();
 router.get("/:from/:to", getNotification);
 router.post("/read", readAllNotifications);
 
-//todo: send notification to a user
-
 export default router;

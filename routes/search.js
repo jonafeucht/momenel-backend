@@ -7,6 +7,5 @@ const router = express.Router();
 router.get("/:query", getSearchSuggestions);
 //get search feed based on query
 router.get("/hashtag/:hashtag/:from/:to", searchFeed);
-//todo: follow a hashtag
 
 export default router;
