@@ -95,6 +95,7 @@ const getOnePost = async (req, res) => {
       `id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format)`
     )
     .eq("id", id)
+    .order("created_at", { foreignTable: "content", ascending: false })
     .single();
   if (error) return res.status(500).json({ error: error.message });
 
@@ -166,6 +167,8 @@ const createPost = async (req, res) => {
 
   // * create the media
   // loop through the media files and check if the file is a video or image
+  // ! COMPRESS VIDEO
+  const child = fork("helpers/video.js");
   try {
     media.forEach(async (file, index) => {
       if (file.mimetype.toString().startsWith("image")) {
@@ -256,7 +259,7 @@ const createPost = async (req, res) => {
               },
             }
           )
-          .then(async (response) => {
+          .then(async () => {
             // update status to published
             await supabase
               .from("content")
@@ -269,8 +272,7 @@ const createPost = async (req, res) => {
           height = dimensions[index]?.height || 500;
         let buffer = file.buffer;
         const originalFileName = file.originalname;
-        // ! COMPRESS VIDEO
-        const child = fork("helpers/video.js");
+
         tmp.file(
           { postfix: path.extname(originalFileName) },
           (err, tempFilePath, fd, cleanupCallback) => {
@@ -348,15 +350,14 @@ const createPost = async (req, res) => {
             );
           }
         );
-
-        child.on("message", (message) => {
-          const { statusCode, text, post_id } = message;
-          if (statusCode !== 200) {
-            //todo: error notification
-            console.log(post_id);
-          }
-        });
       } else {
+      }
+    });
+    child.on("message", (message) => {
+      const { statusCode, text, post_id } = message;
+      if (statusCode !== 200) {
+        //todo: error notification
+        console.log(post_id);
       }
     });
   } catch (error) {}

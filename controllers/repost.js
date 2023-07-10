@@ -12,6 +12,7 @@ const getOneRepost = async (req, res) => {
         `id,created_at,repostedBy:profiles(id,username),post!inner(id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format))`
       )
       .eq("id", id)
+      .order("created_at", { foreignTable: "post.content", ascending: false })
       .single();
 
     if (error3) return res.status(500).json({ error: "Something went wrong" });
