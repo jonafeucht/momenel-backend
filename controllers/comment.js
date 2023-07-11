@@ -2,14 +2,16 @@ import supabase from "../supabase/supabase.js";
 
 // GET /comment/:id => get all comments for a post
 const getComments = async (req, res) => {
-  const { id: postId } = req.params;
+  const { id: postId, from, to } = req.params;
 
   // get all comments for a post and sort by created_at
   const { data, error } = await supabase
     .from("comment")
     .select("*, user:profiles(id, username, profile_url)")
     .eq("post_id", postId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to)
+    .limit(20);
 
   if (error) {
     return res.status(400).json({ error: error.message });

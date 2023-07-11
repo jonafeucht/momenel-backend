@@ -7,7 +7,7 @@ import {
 
 const router = express.Router();
 
-router.get("/:id", getComments);
+router.get("/:id/:from/:to", getComments);
 router.post("/:id", createComment);
 router.delete("/:id", deleteComment);
 
