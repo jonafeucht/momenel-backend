@@ -505,7 +505,7 @@ const getProfile = async (req, res) => {
     .order("created_at", { ascending: false })
     .order("created_at", { foreignTable: "content", ascending: false })
     .range(from, to)
-    .limit(10);
+    .limit(20);
 
   if (postsError) return res.status(500).json({ error: postsError.message });
   // add to data with type post
@@ -521,7 +521,7 @@ const getProfile = async (req, res) => {
     .order("created_at", { ascending: false })
     .order("created_at", { foreignTable: "post.content", ascending: false })
     .range(from, to)
-    .limit(10);
+    .limit(20);
 
   if (error3) {
     return res.status(500).json({ error: "Something went wrong" });
