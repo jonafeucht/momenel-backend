@@ -282,7 +282,7 @@ const createPost = async (req, res) => {
             buffer,
             {
               headers: {
-                AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+                AccessKey: process.env.Image_Upload_Access_Key,
                 "Content-Type": "application/octet-stream",
               },
             }
@@ -294,7 +294,9 @@ const createPost = async (req, res) => {
               .update({ status: "published" })
               .eq("id", media.id);
           })
-          .catch((error) => {});
+          .catch((error) => {
+            console.log(error);
+          });
       } else if (file.mimetype.toString().startsWith("video")) {
         let width = dimensions[index]?.width || 500,
           height = dimensions[index]?.height || 500;
@@ -321,7 +323,7 @@ const createPost = async (req, res) => {
                       method: "POST",
                       url: `${baseUrl}${process.env.Video_Upload_ID}/videos`,
                       headers: {
-                        AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+                        AccessKey: process.env.Video_Upload_Access_Key,
                         "Content-Type": "application/json",
                       },
                       data: { title: `${userId}.${"mp4"}` },
@@ -525,7 +527,7 @@ const deletePost = async (req, res) => {
           method: "DELETE",
           url: `${baseUrl}${libraryId}/videos/${item.id}`,
           headers: {
-            AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+            AccessKey: process.env.Video_Upload_Access_Key,
             "Content-Type": "application/json",
           },
         };
@@ -537,7 +539,7 @@ const deletePost = async (req, res) => {
         const options = {
           method: "DELETE",
           url: `https://ny.storage.bunnycdn.com/momenel/posts/${item.id}.${item.format}`,
-          headers: { AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6" },
+          headers: { AccessKey: process.env.Image_Upload_Access_Key },
         };
         axios
           .request(options)

@@ -221,7 +221,7 @@ const updateEditProfile = async (req, res) => {
         axios
           .delete(`${process.env.Profile_Upload_Url}/${data.profile_url}`, {
             headers: {
-              AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+              AccessKey: process.env.Image_Upload_Access_Key,
               "Content-Type": "application/octet-stream",
             },
           })
@@ -249,7 +249,7 @@ const updateEditProfile = async (req, res) => {
         axios
           .delete(`${process.env.Profile_Upload_Url}/${data.profile_url}`, {
             headers: {
-              AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+              AccessKey: process.env.Image_Upload_Access_Key,
               "Content-Type": "application/octet-stream",
             },
           })
@@ -330,7 +330,7 @@ const updateEditProfile = async (req, res) => {
         axios
           .put(`${process.env.Profile_Upload_Url}/${uuid}.${format}`, buffer, {
             headers: {
-              AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+              AccessKey: process.env.Image_Upload_Access_Key,
               "Content-Type": "application/octet-stream",
             },
           })
@@ -675,7 +675,7 @@ const deleteAccount = async (req, res) => {
               method: "DELETE",
               url: `${baseUrl}${libraryId}/videos/${item.id}`,
               headers: {
-                AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+                AccessKey: process.env.Video_Upload_Access_Key,
                 "Content-Type": "application/json",
               },
             };
@@ -699,7 +699,7 @@ const deleteAccount = async (req, res) => {
               method: "DELETE",
               url: `https://ny.storage.bunnycdn.com/momenel/posts/${item.id}.${item.format}`,
               headers: {
-                AccessKey: "d915734c-bee2-4e6a-bb362bf9f500-edf0-4ba6",
+                AccessKey: process.env.Image_Upload_Access_Key,
               },
             };
 

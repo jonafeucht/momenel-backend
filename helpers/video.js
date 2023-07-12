@@ -40,7 +40,7 @@ process.on("message", (payload) => {
             data,
             {
               headers: {
-                AccessKey: "83cb2977-bab2-48ff-a8365d239ec5-4a70-43e0",
+                AccessKey: process.env.Video_Upload_Access_Key,
                 "Content-Type": "application/octet-stream",
               },
             }
