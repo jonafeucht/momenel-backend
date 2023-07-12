@@ -8,7 +8,7 @@ const videoHook = async (req, res) => {
     let { data, error } = await supabase
       .from("content")
       .update({ status: "published" })
-      .select("post_id,post(user_id)")
+      .select("post_id,post(user_id,caption)")
       .eq("id", VideoGuid)
       .single();
 
@@ -33,7 +33,7 @@ const videoHook = async (req, res) => {
         .eq("id", data.post_id);
       if (postError) return;
 
-      // send notification to post owner after checking if notification doesn't already exist
+      // send notification to post owner
       if (Status == 3) {
         await supabase.from("notifications").insert([
           {
@@ -44,6 +44,34 @@ const videoHook = async (req, res) => {
             system_message: "post has been published",
           },
         ]);
+
+        // get mentioned users in caption
+        let mentionedUsers = data.post.caption.match(/@\w+/g);
+        mentionedUsers = [...new Set(mentionedUsers)];
+        // get the ids of the mentioned users
+        let { data: mentionedUsersData, error: mentionedUsersError } =
+          await supabase
+            .from("profiles")
+            .select("id")
+            .in(
+              "username",
+              mentionedUsers.map((user) => user.slice(1))
+            );
+        if (mentionedUsersError) return;
+
+        // send notification to mentioned users
+        mentionedUsersData.map(async (user) => {
+          if (user.id === data.post.user_id) return;
+
+          await supabase.from("notifications").insert([
+            {
+              sender_id: data.post.user_id,
+              receiver_id: user.id,
+              type: "mentionPost",
+              post_id: data.post_id,
+            },
+          ]);
+        });
       }
     }
   } else if (Status == 5) {

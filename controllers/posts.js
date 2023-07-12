@@ -158,8 +158,36 @@ const createPost = async (req, res) => {
         system_message: "post has been published",
       },
     ]);
+    res.status(201).json(data);
 
-    return res.status(201).json(data);
+    // get mentioned users in caption
+    let mentionedUsers = caption.match(/@\w+/g);
+    // remove dubliactes
+    mentionedUsers = [...new Set(mentionedUsers)];
+    // get the ids of the mentioned users
+    let { data: mentionedUsersData, error: mentionedUsersError } =
+      await supabase
+        .from("profiles")
+        .select("id")
+        .in(
+          "username",
+          mentionedUsers.map((user) => user.slice(1))
+        );
+    if (mentionedUsersError) return;
+
+    // send notification to mentioned users
+    mentionedUsersData.map(async (user) => {
+      if (user.id === userId) return;
+      await supabase.from("notifications").insert([
+        {
+          sender_id: userId,
+          receiver_id: user.id,
+          type: "mentionPost",
+          post_id: data[0].id,
+        },
+      ]);
+    });
+    return;
   }
 
   // else if there is media files then send a resonse before creating the media
@@ -381,6 +409,36 @@ const createPost = async (req, res) => {
         system_message: "post has been published",
       },
     ]);
+
+    // get mentioned users in caption
+    let mentionedUsers = caption.match(/@\w+/g);
+    // remove dubliactes
+    mentionedUsers = [...new Set(mentionedUsers)];
+
+    // get the ids of the mentioned users
+    let { data: mentionedUsersData, error: mentionedUsersError } =
+      await supabase
+        .from("profiles")
+        .select("id")
+        .in(
+          "username",
+          mentionedUsers.map((user) => user.slice(1))
+        );
+    if (mentionedUsersError) return;
+
+    // send notification to mentioned users
+    mentionedUsersData.map(async (user) => {
+      if (user.id === userId) return;
+
+      await supabase.from("notifications").insert([
+        {
+          sender_id: userId,
+          receiver_id: user.id,
+          type: "mentionPost",
+          post_id: data[0].id,
+        },
+      ]);
+    });
   }
 };
 
