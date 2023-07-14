@@ -101,7 +101,7 @@ const searchFeed = async (req, res) => {
     .eq("hashtag_id", hashtagId)
     .not("post.user_id", "in", blockedIdsString)
     .order("created_at", { ascending: false })
-    .order("created_at", { foreignTable: "post.content", ascending: false })
+    .order("created_at", { foreignTable: "post.content", ascending: true })
     .range(from, to)
     .limit(10);
 

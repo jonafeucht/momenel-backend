@@ -503,7 +503,7 @@ const getProfile = async (req, res) => {
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .order("created_at", { foreignTable: "content", ascending: false })
+    .order("created_at", { foreignTable: "content", ascending: true })
     .range(from, to)
     .limit(20);
 
@@ -519,7 +519,7 @@ const getProfile = async (req, res) => {
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .order("created_at", { foreignTable: "post.content", ascending: false })
+    .order("created_at", { foreignTable: "post.content", ascending: true })
     .range(from, to)
     .limit(20);
 
