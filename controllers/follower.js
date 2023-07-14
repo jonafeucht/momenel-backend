@@ -46,15 +46,16 @@ const handleFollow = async (req, res) => {
   if (error2) return res.status(500).json({ error: error2.message });
 
   // send the follow notification
-  await supabase.from("notifications").insert([
-    {
-      sender_id: user_id,
-      receiver_id: following_id,
-      type: "follow",
-      isRead: false,
-    },
-  ]);
-
+  if (user_id !== following_id) {
+    await supabase.from("notifications").insert([
+      {
+        sender_id: user_id,
+        receiver_id: following_id,
+        type: "follow",
+        isRead: false,
+      },
+    ]);
+  }
   return res.status(201).send();
 };
 

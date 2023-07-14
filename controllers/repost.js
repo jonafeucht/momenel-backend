@@ -121,15 +121,16 @@ const handleRepost = async (req, res) => {
       .select("id,post(user_id)");
     if (error) return res.status(500).json({ error: "Something went wrong" });
     // send notification to user who created the post
-    await supabase.from("notifications").insert([
-      {
-        sender_id: userId,
-        receiver_id: data[0].post.user_id,
-        type: "repost",
-        repost_id: data[0].id,
-      },
-    ]);
-
+    if (userId !== data[0].post.user_id) {
+      await supabase.from("notifications").insert([
+        {
+          sender_id: userId,
+          receiver_id: data[0].post.user_id,
+          type: "repost",
+          repost_id: data[0].id,
+        },
+      ]);
+    }
     return res.status(201).send();
   }
 };
