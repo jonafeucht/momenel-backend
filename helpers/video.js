@@ -64,7 +64,5 @@ process.on("message", (payload) => {
 });
 
 process.on("uncaughtException", (err) => {
-  console.log("uncaughtException");
-  console.log(err);
   process.exit(1);
 });

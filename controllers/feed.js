@@ -73,7 +73,6 @@ const getHomeFeed = async (req, res) => {
     .order("created_at", { foreignTable: "post.content", ascending: true });
 
   if (error3) {
-    console.log(error3);
     return res.status(500).json({ error: "Something went wrong" });
   }
 

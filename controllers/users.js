@@ -355,9 +355,7 @@ const updateEditProfile = async (req, res) => {
     } else {
       res.status(200).json(data);
     }
-  } catch (error) {
-    console.log(error);
-  }
+  } catch (error) {}
 };
 
 //get date of birth
