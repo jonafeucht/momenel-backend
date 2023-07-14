@@ -27,14 +27,12 @@ function extractHashtags(str, userId, postId) {
         let tag_id = data[0].id;
 
         // create post and hashtag relationship in the post_hashtags table
-        const { data: data2, error: error2 } = await supabase
-          .from("post_hashtags")
-          .insert([
-            {
-              post_id: postId,
-              hashtag_id: tag_id,
-            },
-          ]);
+        const { error: error2 } = await supabase.from("post_hashtags").insert([
+          {
+            post_id: postId,
+            hashtag_id: tag_id,
+          },
+        ]);
         if (error2) return { error: error2.message };
       }
       // if the hashtag does not exist, create it
@@ -50,14 +48,12 @@ function extractHashtags(str, userId, postId) {
         if (error3) return { error: error3.message };
 
         // create post and hashtag relationship in the post_hashtags table
-        const { data: data4, error: error4 } = await supabase
-          .from("post_hashtags")
-          .insert([
-            {
-              post_id: postId,
-              hashtag_id: data3[0].id,
-            },
-          ]);
+        const { error: error4 } = await supabase.from("post_hashtags").insert([
+          {
+            post_id: postId,
+            hashtag_id: data3[0].id,
+          },
+        ]);
         if (error4) return { error: error4.message };
       }
     });

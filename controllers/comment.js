@@ -79,16 +79,14 @@ const createComment = async (req, res) => {
 
   // send notification to the post owner
   if (userId !== data.post.user_id) {
-    const { data: notification, error: error2 } = await supabase
-      .from("notifications")
-      .insert([
-        {
-          sender_id: userId,
-          receiver_id: data.post.user_id,
-          type: "comment",
-          comment_id: data.id,
-        },
-      ]);
+    await supabase.from("notifications").insert([
+      {
+        sender_id: userId,
+        receiver_id: data.post.user_id,
+        type: "comment",
+        comment_id: data.id,
+      },
+    ]);
   }
 
   res.status(201).json(data);
@@ -109,17 +107,14 @@ const createComment = async (req, res) => {
         if (error3) return Error(error3);
 
         if (mentionedUser) {
-          const { data: notification, error: error4 } = await supabase
-            .from("notifications")
-            .insert([
-              {
-                sender_id: userId,
-                receiver_id: mentionedUser[0].id,
-                type: "mentionComment",
-                comment_id: data.id,
-              },
-            ]);
-          error4;
+          await supabase.from("notifications").insert([
+            {
+              sender_id: userId,
+              receiver_id: mentionedUser[0].id,
+              type: "mentionComment",
+              comment_id: data.id,
+            },
+          ]);
         }
       } catch (error) {
         return;

@@ -40,7 +40,7 @@ const handleFollow = async (req, res) => {
 
   // if user is not following the follower_id
   // follow the user
-  const { data: data2, error: error2 } = await supabase
+  const { error: error2 } = await supabase
     .from("follower")
     .insert([{ follower_id: user_id, following_id: following_id }]);
   if (error2) return res.status(500).json({ error: error2.message });

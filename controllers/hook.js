@@ -27,7 +27,7 @@ const videoHook = async (req, res) => {
 
     // if all the content is published then update the post status to published
     if (isPublished) {
-      const { data: post, error: postError } = await supabase
+      const { error: postError } = await supabase
         .from("post")
         .update({ published: true })
         .eq("id", data.post_id);
@@ -110,7 +110,7 @@ const trendingHashtagsHook = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 
-  const { data: data3, error: error3 } = await supabase
+  const { error: error3 } = await supabase
     .from("trending_hashtags")
     .insert(data.map((hashtag) => ({ hashtag_id: hashtag.hashtag_id })));
 

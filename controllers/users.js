@@ -565,7 +565,7 @@ const getProfile = async (req, res) => {
     return updatedPost;
   });
 
-  // remove duplicates
+  // remove dublicates
   posts = posts.filter(
     (post, index, self) =>
       index === self.findIndex((p) => p.id === post.id && p.type === post.type)

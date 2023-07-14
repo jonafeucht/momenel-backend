@@ -42,7 +42,7 @@ const handleBlock = async (req, res) => {
   // if user is already following the follower_id
   if (data.length > 0) {
     // unfollow the user
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("blocked")
       .delete()
       .eq("user_id", userId)
@@ -51,7 +51,7 @@ const handleBlock = async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
     return res.status(204).send();
   } else {
-    const { data: data2, error: error2 } = await supabase
+    const { error: error2 } = await supabase
       .from("blocked")
       .insert([{ user_id: userId, blocked_id: blocked_id }]);
 

@@ -163,7 +163,7 @@ const createPost = async (req, res) => {
 
     // get mentioned users in caption
     let mentionedUsers = caption.match(/@\w+/g);
-    // remove dubliactes
+    // remove dublicates
     mentionedUsers = [...new Set(mentionedUsers)];
     // get the ids of the mentioned users
     let { data: mentionedUsersData, error: mentionedUsersError } =
@@ -418,7 +418,7 @@ const createPost = async (req, res) => {
 
     // get mentioned users in caption
     let mentionedUsers = caption.match(/@\w+/g);
-    // remove dubliactes
+    // remove dublicates
     mentionedUsers = [...new Set(mentionedUsers)];
 
     // get the ids of the mentioned users

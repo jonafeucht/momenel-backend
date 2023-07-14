@@ -3,7 +3,7 @@ import supabase from "../supabase/supabase.js";
 //get home feed for a user => posts from users they follow and their own posts
 const getHomeFeed = async (req, res) => {
   const { id: userId } = req.user;
-  let { from, to, ids } = req.params;
+  let { from, to } = req.params;
   let posts = [];
 
   // get all users the user follows

@@ -5,12 +5,11 @@ import axios from "axios";
 import supabase from "../supabase/supabase.js";
 
 process.on("message", (payload) => {
-  const { path, userId, post_id, newFile, width, height, guid } = payload;
+  const { path, post_id, newFile, guid } = payload;
 
   const endProcess = (endPayload) => {
     const { statusCode, text } = endPayload;
     // Remove temp file
-
     fs.unlink(path, (err) => {
       if (err) {
         process.send({ statusCode: 500, text: err.message, post_id: post_id });

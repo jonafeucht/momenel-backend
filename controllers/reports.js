@@ -36,18 +36,16 @@ const handleReport = async (req, res) => {
       return res.status(400).json({ error: "Already reported" });
     }
     // insert report
-    const { data: reportData, error: reportError } = await supabase
-      .from("reports")
-      .insert([
-        {
-          reporter_id: userId,
-          type: type,
-          reported_post_id: type === "post" ? item_id : null,
-          reported_comment_id: type === "comment" ? item_id : null,
-          description: reason,
-          report_option_id: report_id,
-        },
-      ]);
+    const { error: reportError } = await supabase.from("reports").insert([
+      {
+        reporter_id: userId,
+        type: type,
+        reported_post_id: type === "post" ? item_id : null,
+        reported_comment_id: type === "comment" ? item_id : null,
+        description: reason,
+        report_option_id: report_id,
+      },
+    ]);
     if (reportError) {
       return res.status(500).json({ error: reportError.message });
     }
@@ -66,17 +64,15 @@ const handleReport = async (req, res) => {
       return res.status(400).json({ error: "Already reported" });
     }
     // insert report
-    const { data: reportData, error: reportError } = await supabase
-      .from("reports")
-      .insert([
-        {
-          reporter_id: userId,
-          type: "profile",
-          reported_profile_id: item_id,
-          description: reason,
-          report_option_id: report_id,
-        },
-      ]);
+    const { error: reportError } = await supabase.from("reports").insert([
+      {
+        reporter_id: userId,
+        type: "profile",
+        reported_profile_id: item_id,
+        description: reason,
+        report_option_id: report_id,
+      },
+    ]);
     if (reportError) {
       return res.status(500).json({ error: reportError.message });
     }

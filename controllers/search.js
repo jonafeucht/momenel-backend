@@ -52,7 +52,6 @@ const getSearchSuggestions = async (req, res) => {
     }
 
     data = data.concat(usernames);
-
     return res.send(data);
   }
 };
@@ -109,7 +108,7 @@ const searchFeed = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 
-  // remove all dubplicates
+  // remove all dublicates
   data23 = data23.filter(
     (post, index, self) => index === self.findIndex((t) => t.id === post.id)
   );
