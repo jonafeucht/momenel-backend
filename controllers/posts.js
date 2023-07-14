@@ -121,6 +121,7 @@ const createPost = async (req, res) => {
   if (req.body.dimensions) dimensions = JSON.parse(req.body.dimensions);
   const { id: userId } = req.user;
   const { files: media } = req;
+  let isError = false;
 
   // * create the post
   const { data, error } = await supabase
@@ -199,6 +200,7 @@ const createPost = async (req, res) => {
   const child = fork("helpers/video.js"); // compress video in a child process
   try {
     for (const [index, file] of media.entries()) {
+      if (isError) break;
       if (file.mimetype.toString().startsWith("image")) {
         let width = dimensions[index]?.width || 500,
           height = dimensions[index]?.height || 500;
@@ -274,7 +276,10 @@ const createPost = async (req, res) => {
           .select("id")
           .single();
 
-        if (error) return;
+        if (error) {
+          isError = true;
+          break;
+        }
 
         await axios
           .put(
@@ -294,7 +299,13 @@ const createPost = async (req, res) => {
               .update({ status: "published" })
               .eq("id", media.id);
           })
-          .catch(async () => {});
+          .catch(async () => {
+            isError = true;
+            await supabase
+              .from("content")
+              .update({ status: "error" })
+              .eq("id", media.id);
+          });
       } else if (file.mimetype.toString().startsWith("video")) {
         let width = dimensions[index]?.width || 500,
           height = dimensions[index]?.height || 500;
@@ -305,16 +316,20 @@ const createPost = async (req, res) => {
           { postfix: path.extname(originalFileName) },
           (err, tempFilePath, fd, cleanupCallback) => {
             if (err) {
+              isError = true;
               return;
             }
             tmp.file(
               { postfix: path.extname(originalFileName) },
               (err, finalFile, fd, cleanupCallbackNew) => {
                 if (err) {
+                  isError = true;
                   return;
                 }
                 fs.writeFile(tempFilePath, buffer, (err) => {
                   if (err) {
+                    isError = true;
+                    return;
                   } else {
                     const baseUrl = "https://video.bunnycdn.com/library/";
                     const createOptions = {
@@ -330,7 +345,7 @@ const createPost = async (req, res) => {
                       .request(createOptions)
                       .then(async (response) => {
                         // create the media with type video
-                        const { data: media, error } = await supabase
+                        const { error } = await supabase
                           .from("content")
                           .insert([
                             {
@@ -344,6 +359,7 @@ const createPost = async (req, res) => {
                           .select("id")
                           .single();
                         if (error) {
+                          isError = true;
                           return;
                         }
                         // upload video
@@ -357,20 +373,8 @@ const createPost = async (req, res) => {
                           guid: response.data.guid,
                         });
                       })
-                      .catch(async (error) => {
-                        await supabase
-                          .from("content")
-                          .insert([
-                            {
-                              status: "error",
-                              post_id: data[0].id,
-                              type: "video",
-                              width,
-                              height,
-                            },
-                          ])
-                          .select("id")
-                          .single();
+                      .catch(() => {
+                        isError = true;
                       });
                   }
                 });
@@ -378,22 +382,24 @@ const createPost = async (req, res) => {
             );
           }
         );
-      } else {
       }
     }
-    child.on("message", (message) => {
-      const { statusCode, text, post_id } = message;
-      if (statusCode !== 200) {
-        //todo: error notification
-        console.log(post_id);
-      }
-    });
-  } catch (error) {}
+  } catch (error) {
+    isError = true;
+  }
+
+  child.on("message", (message) => {
+    const { statusCode } = message;
+    if (statusCode !== 200) {
+      isError = true;
+      return;
+    }
+  });
 
   /*check if there are any items in the `media` array whose `mimetype` property
   starts with the string "video". If there are no such items, it updates the `published` property of
   the first item in the `post` table of a Supabase database to `true`. */
-  if (!media.some((item) => item.mimetype.startsWith("video"))) {
+  if (!media.some((item) => item.mimetype.startsWith("video")) && !isError) {
     await supabase
       .from("post")
       .update({ published: true })
@@ -439,6 +445,12 @@ const createPost = async (req, res) => {
         },
       ]);
     });
+  } else if (isError) {
+    // set post published to null
+    await supabase
+      .from("post")
+      .update({ published: null })
+      .eq("id", data[0].id);
   }
 };
 
