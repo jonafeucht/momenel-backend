@@ -75,12 +75,20 @@ const videoHook = async (req, res) => {
       }
     }
   } else if (Status == 5) {
-    await supabase
+    const { data, error } = await supabase
       .from("content")
       .update({ status: "error" })
-      .eq("id", VideoGuid);
+      .select("post_id")
+      .eq("id", VideoGuid)
+      .single();
+    if (error) {
+      return;
+    }
 
-    //todo: send error notification
+    await supabase
+      .from("post")
+      .update({ published: null })
+      .eq("id", data.post_id);
   }
 
   res.status(200).end(); // Responding is important
