@@ -11,7 +11,7 @@ const getComments = async (req, res) => {
     .eq("post_id", postId)
     .order("created_at", { ascending: false })
     .range(from, to)
-    .limit(20);
+    .limit(30);
 
   if (error) {
     return res.status(400).json({ error: error.message });

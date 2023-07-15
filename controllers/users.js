@@ -644,8 +644,11 @@ const getProfile = async (req, res) => {
     likes_count: likes,
   };
 
-  data = { profile, posts };
-
+  if (from === "0") {
+    data = { profile, posts };
+  } else {
+    data = { posts };
+  }
   res.send(data);
 };
 

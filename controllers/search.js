@@ -102,7 +102,7 @@ const searchFeed = async (req, res) => {
     .order("created_at", { ascending: false })
     .order("created_at", { foreignTable: "post.content", ascending: true })
     .range(from, to)
-    .limit(10);
+    .limit(30);
 
   if (error3) {
     return res.status(500).json({ error: "Something went wrong" });

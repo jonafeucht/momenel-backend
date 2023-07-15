@@ -47,7 +47,8 @@ const getHomeFeed = async (req, res) => {
     .not("user_id", "in", blockedIdsString)
     .order("created_at", { ascending: false })
     .order("created_at", { foreignTable: "content", ascending: true })
-    .range(from, to);
+    .range(from, to)
+    .limit(15);
 
   if (error2) {
     return res.status(500).json({ error: "Something went wrong" });
@@ -69,6 +70,7 @@ const getHomeFeed = async (req, res) => {
     .not("post.user_id", "in", blockedIdsString)
     .not("user_id", "in", blockedIdsString)
     .range(from, to)
+    .limit(15)
     .order("created_at", { ascending: false })
     .order("created_at", { foreignTable: "post.content", ascending: true });
 
@@ -172,7 +174,8 @@ const getDiscoverFeed = async (req, res) => {
     .not("post.user_id", "in", blockedIdsString)
     .order("created_at", { ascending: false })
     .order("created_at", { foreignTable: "post.content", ascending: true })
-    .range(from, to);
+    .range(from, to)
+    .limit(30);
   if (error3) {
     return res.status(500).json({ error: "Something went wrong" });
   }
@@ -198,7 +201,8 @@ const getDiscoverFeed = async (req, res) => {
     .not("post.user_id", "in", blockedIdsString)
     .order("created_at", { ascending: false })
     .order("created_at", { foreignTable: "post.content", ascending: true })
-    .range(from, to);
+    .range(from, to)
+    .limit(30);
 
   if (trendingPostsError) {
     return res.status(500).json({ error: "Something went wrong" });
