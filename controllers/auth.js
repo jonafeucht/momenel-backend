@@ -42,14 +42,4 @@ const resetPassword = async (req, res) => {
   }
 };
 
-const signIn = async (req, res) => {
-  const { email, password } = req.body;
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-};
-
-export { doesEmailExist, signIn, resetPassword };
+export { doesEmailExist, resetPassword };
