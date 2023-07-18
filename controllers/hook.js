@@ -1,6 +1,9 @@
 import supabase from "../supabase/supabase.js";
 
 const videoHook = async (req, res) => {
+  if (req.params.secret !== process.env.Secret) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
   let { VideoGuid, Status } = req.body;
   // set video status to ready if status is 3 or 4 and error if status is 5
   if (Status == 3 || Status == 4) {
@@ -95,6 +98,9 @@ const videoHook = async (req, res) => {
 };
 
 const trendingHashtagsHook = async (req, res) => {
+  if (req.params.secret !== process.env.Secret) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
   const { data, error } = await supabase.rpc("get_top_hashtags");
 
   if (error) {
