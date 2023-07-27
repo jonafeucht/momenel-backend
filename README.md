@@ -1,4 +1,5 @@
 # Momenel
+![Momenel Banner](./feature.png)
 
 Momenel is a privacy-first, open-source social media application that prioritizes minimal data collection.
 It's designed to be simple, fun, and user-friendly, providing a refreshing alternative to mainstream social media platforms.
