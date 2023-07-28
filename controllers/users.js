@@ -150,6 +150,7 @@ const updateEditProfile = async (req, res) => {
   name = name.trim();
   bio = bio.trim();
   website = website.trim();
+  website = website === "null" ? null : website;
 
   // check if username is not an empty string or is empty spaces and max length is 30 characters and has no spaces
   if (!username || username === "")
@@ -189,7 +190,8 @@ const updateEditProfile = async (req, res) => {
     return res.status(400).json({ error: "Website cannot be empty" });
   // check if website is a valid url based on regex
   if (
-    website &&
+    website !== null &&
+    website.length > 0 &&
     !website.match(
       "^(https?:\\/\\/)?" + // protocol
         "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
@@ -200,7 +202,7 @@ const updateEditProfile = async (req, res) => {
       "i"
     )
   ) {
-    return res.status(400).json({ error: "Website is not a valid url" });
+    return res.status(400).json({ error: "Link is not a valid url" });
   }
 
   // update username, name, bio, website
