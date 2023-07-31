@@ -69,14 +69,13 @@ const getFollowers = async (req, res) => {
     .select("user:profiles!follower_follower_id_fkey(id,username, profile_url)")
     .eq("following_id", userId)
     .order("created_at", { ascending: false });
-
   if (error) return res.status(500).json({ error: error.message });
 
   // get if user is following the user who liked the post
   const { data: doFollow, error: error2 } = await supabase
     .from("follower")
     .select("following_id")
-    .eq("follower_id", userId)
+    .eq("follower_id", req.user.id)
     .in(
       "following_id",
       data.map(({ user }) => user.id)
