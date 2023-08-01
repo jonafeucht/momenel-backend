@@ -107,6 +107,7 @@ const createComment = async (req, res) => {
         if (error3) return Error(error3);
 
         if (mentionedUser) {
+          if (mentionedUser[0].id === userId) return;
           await supabase.from("notifications").insert([
             {
               sender_id: userId,
