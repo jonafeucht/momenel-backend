@@ -1,5 +1,83 @@
 import supabase from "../supabase/supabase.js";
 
+const getForYouFeed = async (req, res) => {
+  const { id: userId } = req.user;
+  const from = parseInt(req.params.from) || 0;
+  const to = parseInt(req.params.to) || 14;
+
+  try {
+    const { data: posts, error } = await supabase.rpc("get_feed", {
+      p_user_id: userId,
+      p_from: from,
+      p_to: to,
+    });
+
+    if (error) {
+      res.status(500).json({ error: "An error occurred while fetching feed" });
+      return;
+    }
+    const feed = await Promise.all(
+      posts.map(async (post) => {
+        // Fetch related data for each post
+        const { data: content } = await supabase
+          .from("content")
+          .select("*")
+          .eq("post_id", post.f_post_id);
+
+        const { data: userDb } = await supabase
+          .from("profiles")
+          .select("id, username,profile_url")
+          .eq("id", post.f_user_id);
+        const user = userDb[0];
+
+        const { count: likes } = await supabase
+          .from("like")
+          .select("id", { count: "exact", head: true })
+          .eq("post_id", post.f_post_id);
+        const { count: comments } = await supabase
+          .from("comment")
+          .select("id", { count: "exact", head: true })
+          .eq("post_id", post.f_post_id);
+        const { count: reposts } = await supabase
+          .from("repost")
+          .select("id", { count: "exact", head: true })
+          .eq("post_id", post.f_post_id);
+
+        let repostedBy = null;
+        let repostId = null;
+        if (post.f_type === "repost") {
+          const { data: repostUserDb } = await supabase
+            .from("profiles")
+            .select("id, username")
+            .eq("id", post.f_repost_user_id);
+          repostedBy = repostUserDb[0];
+          repostId = post.f_repost_id;
+        }
+        // Assemble the final object for this post
+        return {
+          type: post.f_type, // 'post' or 'repost'
+          id: post.f_post_id,
+          repostId,
+          caption: post.f_caption,
+          user_id: post.f_user_id,
+          created_at: post.f_created_at,
+          content,
+          user,
+          likes: likes,
+          comments: comments,
+          reposts: reposts,
+          repostedBy,
+          isLiked: post.isliked,
+          isReposted: post.isreposted,
+        };
+      })
+    );
+    res.json(feed);
+  } catch (err) {
+    res.status(500).json({ error: "An error occurred while fetching feed" });
+  }
+};
+
 //get home feed for a user => posts from users they follow and their own posts
 const getHomeFeed = async (req, res) => {
   const { id: userId } = req.user;
@@ -268,4 +346,4 @@ const getDiscoverFeed = async (req, res) => {
   });
 };
 
-export { getHomeFeed, getDiscoverFeed };
+export { getHomeFeed, getDiscoverFeed, getForYouFeed };
