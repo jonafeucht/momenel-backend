@@ -26,7 +26,7 @@ const getForYouFeed = async (req, res) => {
 
         const { data: userDb } = await supabase
           .from("profiles")
-          .select("id, username,profile_url")
+          .select("id, username,profile_url,name")
           .eq("id", post.f_user_id);
         const user = userDb[0];
 
