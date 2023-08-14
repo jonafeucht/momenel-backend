@@ -119,7 +119,7 @@ const createComment = async (req, res) => {
             mentionedUser[0].id === data.post.user_id
           )
             return;
-          supabase.from("notifications").insert([
+          await supabase.from("notifications").insert([
             {
               sender_id: userId,
               receiver_id: mentionedUser[0].id,
