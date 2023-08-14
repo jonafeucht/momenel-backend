@@ -236,7 +236,7 @@ const createPost = async (req, res) => {
         their details. */
         let quality =
           file.size > 10000000 ? 80 : file.size < 1000000 ? 100 : 88;
-
+        let hasBeenFlipped = false;
         // if the file is not a gif then compress it
         if (file.mimetype.toString() !== "image/gif") {
           await sharp(buffer)
@@ -244,8 +244,13 @@ const createPost = async (req, res) => {
             .png({ quality: quality, force: false })
             .toBuffer({ resolveWithObject: true })
             .then(({ data, info }) => {
-              buffer = data;
-              format = info.format;
+              if (info.width === height && info.height === width) {
+                hasBeenFlipped = true;
+                return;
+              } else {
+                buffer = data;
+                format = info.format;
+              }
             })
             .catch(() => {});
         } else if (file.mimetype.toString() === "image/gif") {
