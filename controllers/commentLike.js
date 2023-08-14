@@ -1,3 +1,4 @@
+import SendNotification from "../helpers/Notification.js";
 import supabase from "../supabase/supabase.js";
 
 const handleLikeComment = async (req, res) => {
@@ -39,8 +40,9 @@ const handleLikeComment = async (req, res) => {
       .single();
     if (error) return res.status(500).json({ error: "Something went wrong" });
     // send like notification
+
     if (data.comment.user_id !== userId) {
-      await supabase.from("notifications").insert([
+      supabase.from("notifications").insert([
         {
           sender_id: userId,
           receiver_id: data.comment.user_id,
@@ -49,6 +51,11 @@ const handleLikeComment = async (req, res) => {
           comment_id: commentId,
         },
       ]);
+      SendNotification({
+        type: "comment_like",
+        senderId: userId,
+        receiverId: data.comment.user_id,
+      });
     }
 
     return res.status(201).send();

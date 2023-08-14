@@ -1,3 +1,4 @@
+import SendNotification from "../helpers/Notification.js";
 import supabase from "../supabase/supabase.js";
 
 // GET /comment/:id => get all comments for a post
@@ -87,6 +88,12 @@ const createComment = async (req, res) => {
         comment_id: data.id,
       },
     ]);
+    SendNotification({
+      type: "post_comment",
+      senderId: userId,
+      receiverId: data.post.user_id,
+      comment: text,
+    });
   }
 
   res.status(201).json(data);
@@ -107,8 +114,12 @@ const createComment = async (req, res) => {
         if (error3) return Error(error3);
 
         if (mentionedUser) {
-          if (mentionedUser[0].id === userId) return;
-          await supabase.from("notifications").insert([
+          if (
+            mentionedUser[0].id === userId ||
+            mentionedUser[0].id === data.post.user_id
+          )
+            return;
+          supabase.from("notifications").insert([
             {
               sender_id: userId,
               receiver_id: mentionedUser[0].id,
@@ -116,6 +127,12 @@ const createComment = async (req, res) => {
               comment_id: data.id,
             },
           ]);
+          SendNotification({
+            type: "comment_mention",
+            senderId: userId,
+            receiverId: mentionedUser[0].id,
+            comment: text,
+          });
         }
       } catch (error) {
         return;

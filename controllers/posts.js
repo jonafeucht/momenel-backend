@@ -8,7 +8,7 @@ import tmp from "tmp";
 import fs from "fs";
 import path from "path";
 import { fork } from "child_process";
-import e from "express";
+import SendNotification from "../helpers/Notification.js";
 
 // this will get all the posts by the user
 const getUserPosts = async (req, res) => {
@@ -159,6 +159,11 @@ const createPost = async (req, res) => {
         system_message: "post has been published",
       },
     ]);
+    SendNotification({
+      type: "post_published",
+      senderId: userId,
+      receiverId: data[0].user_id,
+    });
     res.status(201).json(data);
 
     // get mentioned users in caption
@@ -187,6 +192,11 @@ const createPost = async (req, res) => {
           post_id: data[0].id,
         },
       ]);
+      SendNotification({
+        type: "post_mention",
+        senderId: userId,
+        receiverId: user.id,
+      });
     });
     return;
   }
@@ -415,6 +425,11 @@ const createPost = async (req, res) => {
         system_message: "post has been published",
       },
     ]);
+    SendNotification({
+      type: "post_published",
+      senderId: userId,
+      receiverId: data[0].user_id,
+    });
 
     // get mentioned users in caption
     let mentionedUsers = caption.match(/@\w+/g);
@@ -444,6 +459,11 @@ const createPost = async (req, res) => {
           post_id: data[0].id,
         },
       ]);
+      SendNotification({
+        type: "post_mention",
+        senderId: userId,
+        receiverId: user.id,
+      });
     });
   } else if (isError) {
     // set post published to null

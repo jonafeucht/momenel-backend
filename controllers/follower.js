@@ -1,3 +1,4 @@
+import SendNotification from "../helpers/Notification.js";
 import supabase from "../supabase/supabase.js";
 
 // handle user follow and unfollow
@@ -55,6 +56,11 @@ const handleFollow = async (req, res) => {
         isRead: false,
       },
     ]);
+    SendNotification({
+      type: "follow",
+      senderId: user_id,
+      receiverId: following_id,
+    });
   }
   return res.status(201).send();
 };

@@ -59,7 +59,6 @@ const handleLike = async (req, res) => {
 
     try {
       // send like notification
-
       if (p.post.user_id === userId) return;
       await supabase.from("notifications").insert([
         {

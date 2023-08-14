@@ -1,3 +1,4 @@
+import SendNotification from "../helpers/Notification.js";
 import supabase from "../supabase/supabase.js";
 
 const videoHook = async (req, res) => {
@@ -47,6 +48,11 @@ const videoHook = async (req, res) => {
             system_message: "post has been published",
           },
         ]);
+        SendNotification({
+          type: "post_published",
+          senderId: data.post.user_id,
+          receiverId: data.post.user_id,
+        });
 
         // get mentioned users in caption
         let mentionedUsers = data.post.caption.match(/@\w+/g);
@@ -74,6 +80,11 @@ const videoHook = async (req, res) => {
               post_id: data.post_id,
             },
           ]);
+          SendNotification({
+            type: "post_mention",
+            senderId: data.post.user_id,
+            receiverId: user.id,
+          });
         });
       }
     }
