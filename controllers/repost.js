@@ -1,3 +1,4 @@
+import SendNotification from "../helpers/Notification.js";
 import supabase from "../supabase/supabase.js";
 
 const getOneRepost = async (req, res) => {
@@ -130,6 +131,12 @@ const handleRepost = async (req, res) => {
           repost_id: data[0].id,
         },
       ]);
+      // send push notification
+      SendNotification({
+        type: "post_repost",
+        senderId: userId,
+        receiverId: data[0].post.user_id,
+      });
     }
     return res.status(201).send();
   }

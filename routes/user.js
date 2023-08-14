@@ -9,6 +9,7 @@ import {
   updateEditProfile,
   updateHasOnboarded,
   updateName,
+  updateNotificationToken,
   updatePersonalInfo,
   updateUsername,
 } from "../controllers/users.js";
@@ -28,5 +29,6 @@ router.get("/profile/:username/:from/:to", getProfile);
 router.get("/dob", getDob);
 router.post("/updatePersonalInfo", updatePersonalInfo);
 router.delete("/delete", deleteAccount);
+router.post("/updateToken", updateNotificationToken);
 
 export default router;

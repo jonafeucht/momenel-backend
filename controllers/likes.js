@@ -1,3 +1,4 @@
+import SendNotification from "../helpers/Notification.js";
 import supabase from "../supabase/supabase.js";
 
 // POST /posts/like/:id (id of post)
@@ -58,6 +59,7 @@ const handleLike = async (req, res) => {
 
     try {
       // send like notification
+
       if (p.post.user_id === userId) return;
       await supabase.from("notifications").insert([
         {
@@ -68,6 +70,12 @@ const handleLike = async (req, res) => {
           isRead: false,
         },
       ]);
+      // send push notification
+      SendNotification({
+        type: "post_like",
+        senderId: userId,
+        receiverId: p.post.user_id,
+      });
       return;
     } catch (error) {
       return;

@@ -734,6 +734,19 @@ const deleteAccount = async (req, res) => {
   res.send("Account deleted successfully");
 };
 
+const updateNotificationToken = async (req, res) => {
+  const { token } = req.body;
+  console.log(token);
+  const { error } = await supabase
+    .from("profiles")
+    .update({ notification_token: token === undefined ? null : token })
+    .eq("id", req.user.id);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.send("Notification token updated successfully");
+};
+
 export {
   getProfileInitialData,
   updatePersonalInfo,
@@ -746,4 +759,5 @@ export {
   updateHasOnboarded,
   getProfile,
   deleteAccount,
+  updateNotificationToken,
 };

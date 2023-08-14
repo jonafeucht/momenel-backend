@@ -1,4 +1,3 @@
-import e from "express";
 import supabase from "../supabase/supabase.js";
 
 const verify = async (req, res, next) => {

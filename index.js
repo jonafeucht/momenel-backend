@@ -19,6 +19,7 @@ import BlockRouter from "./routes/blocked.js";
 import bodyParser from "body-parser";
 import verify from "./middleware/auth.js";
 import hashtagRouter from "./routes/hashtags.js";
+import { startCronJobs } from "./helpers/cron/CronJobs.js";
 const app = express();
 
 // Middleware
@@ -45,6 +46,9 @@ app.use("/like", likeRouter);
 app.use("/likeComment", commentLikeRouter);
 app.use("/repost", repostRouter);
 app.use("/hashtag", hashtagRouter);
+
+// Start the cron jobs
+startCronJobs();
 
 const port = process.env.PORT || 3000;
 
