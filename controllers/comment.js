@@ -2,6 +2,90 @@ import SendNotification from "../helpers/Notification.js";
 import supabase from "../supabase/supabase.js";
 
 // GET /comment/:id => get all comments for a post
+const getComments2 = async (req, res) => {
+  const { id: postId, from, to } = req.params;
+  const { id: userId } = req.user;
+
+  // get all comments for a post and sort by created_at
+  const { data, error } = await supabase
+    .from("comment")
+    .select("*, user:profiles(id, username, profile_url)")
+    .eq("post_id", postId)
+    .order("created_at", { ascending: false })
+    .range(from, to)
+    .limit(30);
+
+  if (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  const { data: likesCount, error: error2 } = await supabase.rpc(
+    "get_comment_likes",
+    {
+      commentid: data.map((comment) => comment.id),
+    }
+  );
+
+  if (error2) return res.status(400).json({ error: error2.message });
+
+  // map the likesCount and get the like_count. then add the like_count to the data after matching the id with comment_id
+  req.user.id;
+  data.forEach((comment) => {
+    comment.likes = 0;
+    likesCount.forEach((like) => {
+      if (like.comment_id === comment.id) {
+        comment.likes = like.like_count;
+      }
+    });
+  });
+
+  // get all comments that the user has liked from the comment_id
+  const { data: likedComments, error: error3 } = await supabase
+    .from("comment_likes")
+    .select("comment_id")
+    .in(
+      "comment_id",
+      likesCount.map((like) => like.comment_id)
+    )
+    .eq("user_id", req.user.id);
+  if (error3) return res.status(400).json({ error: error3.message });
+
+  // map the likedComments and get the comment_id. then add the isLiked to the data after matching the id with comment_id
+  data.forEach((comment) => {
+    comment.isLiked = false;
+    likedComments.forEach((like) => {
+      if (like.comment_id === comment.id) {
+        comment.isLiked = true;
+      }
+    });
+  });
+
+  let post = {};
+  // if from is 0, then get the post details
+  if (from === "0") {
+    let { data, error } = await supabase
+      .from("post")
+      .select(
+        `id,caption,user_id,created_at, user:profiles(name,username,profile_url), likes: like(count), comments: comment(count), reposts: repost(count), content(id,type,width,height,blurhash,format)`
+      )
+      .eq("id", postId)
+      .order("created_at", { foreignTable: "content", ascending: true })
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+
+    // get ids
+    let { data: hook, error: hookerror } = await supabase.rpc(
+      "check_likes_reposts",
+      { user_id: userId, post_ids: [postId] }
+    );
+    if (hookerror) return res.status(500).json({ error: hookerror.message });
+    data.isLiked = hook.liked.includes(parseInt(postId));
+    data.isReposted = hook.reposted.includes(parseInt(postId));
+    post = data;
+  }
+
+  return res.status(200).json({ post, comments: data });
+};
 const getComments = async (req, res) => {
   const { id: postId, from, to } = req.params;
 
@@ -160,4 +244,4 @@ const deleteComment = async (req, res) => {
   res.status(204).send();
 };
 
-export { createComment, getComments, deleteComment };
+export { createComment, getComments, deleteComment, getComments2 };
